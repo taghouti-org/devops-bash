@@ -291,6 +291,11 @@ if command -v zoxide &>/dev/null; then
     alias cdi='zi'     # interactive fuzzy picker
 fi
 
+# thefuck (command suggestion helper)
+if command -v thefuck &>/dev/null; then
+    eval "$(thefuck --alias)"
+fi
+
 # Quick dir bookmarks
 alias cdp='cd ~/projects 2>/dev/null || cd ~'
 alias cdd='cd ~/Downloads'

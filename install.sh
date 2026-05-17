@@ -1031,6 +1031,10 @@ IMP_SHIM
         fi
     fi
 fi
+# enable thefuck alias in this shell (if available)
+if command -v thefuck &>/dev/null; then
+    eval "$(thefuck --alias)"
+fi
 
 # entr (run arbitrary commands when files change)
 if check_tool "entr" "entr"; then :

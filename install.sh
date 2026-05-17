@@ -103,6 +103,9 @@ done
 # If debug requested, make apt verbose and enable xtrace for easier debugging
 if [[ "${DEBUG:-0}" -eq 1 ]]; then
     APT_QUIET=''
+    # Colorize xtrace prefix so debug command traces stand out
+    PS4='${YELLOW}+${R} '
+    export PS4
     set -x
 fi
 

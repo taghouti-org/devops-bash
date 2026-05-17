@@ -526,10 +526,12 @@ section "Cloud CLIs  (optional — press Enter to skip)"
 
 # AWS CLI
 echo ""
-read -rp "$(echo -e "${PINK}  Install AWS CLI? [y/N]:${R} ")" install_aws
-if [[ "${install_aws,,}" == "y" ]]; then
-    if check_tool "aws-cli" "aws"; then :
-    else
+if check_tool "aws-cli" "aws"; then
+    echo -e "${GREY}  ↷  AWS CLI — already installed${R}"
+    mark_skipped "aws-cli"
+else
+    read -rp "$(echo -e "${PINK}  Install AWS CLI? [y/N]:${R} ")" install_aws
+    if [[ "${install_aws,,}" == "y" ]]; then
         info "Installing AWS CLI v2..."
         curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
             -o /tmp/awscliv2.zip 2>/dev/null
@@ -542,9 +544,9 @@ if [[ "${install_aws,,}" == "y" ]]; then
             mark_failed "aws-cli"
         fi
         rm -rf /tmp/aws /tmp/awscliv2.zip
+    else
+        echo -e "${GREY}  ↷  AWS CLI — skipped by user${R}"
     fi
-else
-    echo -e "${GREY}  ↷  AWS CLI — skipped by user${R}"
 fi
 
 # lazygit
@@ -570,10 +572,12 @@ fi
 section "Starship Prompt  (optional — supercharges your PS1)"
 
 echo ""
-read -rp "$(echo -e "${PINK}  Install Starship prompt? [y/N]:${R} ")" install_starship
-if [[ "${install_starship,,}" == "y" ]]; then
-    if check_tool "starship"; then :
-    else
+if check_tool "starship"; then
+    echo -e "${GREY}  ↷  starship — already installed${R}"
+    mark_skipped "starship"
+else
+    read -rp "$(echo -e "${PINK}  Install Starship prompt? [y/N]:${R} ")" install_starship
+    if [[ "${install_starship,,}" == "y" ]]; then
         info "Installing starship..."
         if curl -fsSL https://starship.rs/install.sh | sh -s -- --yes &>/dev/null; then
             success "starship installed"
@@ -587,35 +591,52 @@ if [[ "${install_starship,,}" == "y" ]]; then
             warn "Starship install failed (starship.rs may be blocked)"
             mark_failed "starship"
         fi
+    else
+        echo -e "${GREY}  ↷  starship — skipped by user${R}"
     fi
-else
-    echo -e "${GREY}  ↷  starship — skipped by user${R}"
 fi
 
 
 # ── 8b. NERD FONTS (optional) ───────────────────────────────────
 echo ""
-read -rp "$(echo -e "${PINK}  Install JetBrainsMono Nerd Font? [y/N]:${R} ")" install_fonts
-if [[ "${install_fonts,,}" == "y" ]]; then
-    info "Installing JetBrainsMono Nerd Font to ~/.local/share/fonts..."
-    mkdir -p "$HOME/.local/share/fonts"
-    TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
-    if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
-        if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
-            fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
-            success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
-            mark_installed "JetBrainsMono Nerd Font"
-        else
-            warn "Failed to unzip Nerd Font archive"
-            mark_failed "JetBrainsMono Nerd Font"
-        fi
-        rm -f "$TEMP_ZIP"
-    else
-        warn "Failed to download Nerd Font (network or GitHub blocked)"
-        mark_failed "JetBrainsMono Nerd Font"
+# If a Nerd font is already present, skip asking to install
+FONT_INSTALLED=0
+if command -v fc-list &>/dev/null; then
+    if fc-list | grep -i 'nerd' &>/dev/null || fc-list | grep -i 'jetbrains' &>/dev/null; then
+        FONT_INSTALLED=1
     fi
 else
-    echo -e "${GREY}  ↷  Nerd Font — skipped by user${R}"
+    if [[ -d "$HOME/.local/share/fonts" ]] && ls "$HOME/.local/share/fonts" | grep -i 'nerd' &>/dev/null; then
+        FONT_INSTALLED=1
+    fi
+fi
+
+if [[ "$FONT_INSTALLED" -eq 1 ]]; then
+    echo -e "${GREY}  ↷  Nerd Font — already installed${R}"
+    mark_skipped "nerd-font"
+else
+    read -rp "$(echo -e "${PINK}  Install JetBrainsMono Nerd Font? [y/N]:${R} ")" install_fonts
+    if [[ "${install_fonts,,}" == "y" ]]; then
+        info "Installing JetBrainsMono Nerd Font to ~/.local/share/fonts..."
+        mkdir -p "$HOME/.local/share/fonts"
+        TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
+        if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
+            if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
+                fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+                success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
+                mark_installed "JetBrainsMono Nerd Font"
+            else
+                warn "Failed to unzip Nerd Font archive"
+                mark_failed "JetBrainsMono Nerd Font"
+            fi
+            rm -f "$TEMP_ZIP"
+        else
+            warn "Failed to download Nerd Font (network or GitHub blocked)"
+            mark_failed "JetBrainsMono Nerd Font"
+        fi
+    else
+        echo -e "${GREY}  ↷  Nerd Font — skipped by user${R}"
+    fi
 fi
 
 # Check whether Nerd Font installed so we can tell user about icons

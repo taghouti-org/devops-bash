@@ -57,6 +57,24 @@ Format: **Tool** — short description
 
 - **neofetch** — simple system info banner shown on shell startup if present. `bashrc` runs `neofetch` automatically (with a blank margin line). Usage: `neofetch`.
 
+# Additional tools added by the installer
+
+- **autojump** — quickly jump to frequently used directories. Usage: `autojump <partial>` or use `j <partial>` if aliased.
+- **entr** — run arbitrary commands when files change (useful for rebuilds/tests). Example: `ls **/*.py | entr -r pytest`.
+- **skim (sk)** — lightweight fuzzy finder alternative to `fzf`. Usage: `sk`.
+- **thefuck** — suggests fixes for mistyped shell commands. After install, run `thefuck --alias` to add alias.
+- **tig** — ncurses-based git repository browser. Usage: `tig` or `tig status`.
+- **git-crypt** — transparent file encryption for git repositories. Usage: `git-crypt init`.
+- **rbenv / pyenv** — language version managers (Ruby / Python). Installer adds clones and prints instructions to source in `~/.bashrc`.
+- **neovim (nvim)** — modern Vim fork. Usage: `nvim <file>`.
+- **micro** — simple terminal-based editor. Usage: `micro <file>`.
+- **chromium** — Chromium browser (prompted install; skipped if other browsers present).
+- **keepassxc** — cross-platform password manager GUI. Usage: launch from applications menu.
+- **hadolint** — Dockerfile linter. Usage: `hadolint Dockerfile`.
+- **tfsec** — Terraform security scanner. Usage: `tfsec ./`.
+- **kubeval** — Kubernetes manifest validator. Usage: `kubeval manifest.yaml`.
+- **taskwarrior** — command-line task manager. Usage: `task add Buy milk`.
+
 Krew plugin recommendations
 - `ctx` — quick context switching helper (similar to `kubectx`).
 - `ns` — namespace switching helper (similar to `kubens`).

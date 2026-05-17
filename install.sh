@@ -128,7 +128,7 @@ check_tool() {
 
     if [[ -n "$bin_path" ]]; then
         # Avoid executing GUI app binaries when probing for versions (they may launch)
-        NO_VERSION_EXEC=(postman code "google-chrome" chrome firefox vlc)
+        NO_VERSION_EXEC=(postman code "google-chrome" chrome firefox vlc wps soffice)
         skip_ver=0
         for p in "${NO_VERSION_EXEC[@]}"; do
             if [[ "$bin" == "$p" || "$bin_path" == *"/$p" ]]; then
@@ -268,6 +268,26 @@ $SUDO apt-get install -y -qq \
     git \
     build-essential \
     2>/dev/null
+
+# Ensure snapd is available (required for some optional installs like Termius/Lens)
+if command -v snap &>/dev/null; then
+    echo -e "${GREY}  ↷  snapd — already available${R}"
+    mark_skipped "snapd"
+else
+    info "snap not found — installing snapd (required for some optional apps)"
+    if run "$SUDO apt-get install -y $APT_QUIET snapd"; then
+        # enable and start snapd socket/service where applicable
+        run "$SUDO systemctl enable --now snapd.socket || true"
+        # install core snap to ensure classic support is present
+        run "$SUDO snap install core || true"
+        success "snapd installed"
+        mark_installed "snapd"
+    else
+        warn "Failed to install snapd — optional snap-based apps may not be available"
+        mark_failed "snapd"
+    fi
+fi
+
 success "Prerequisites ready"
 
 # ── 2. TERMINAL TOOLS ────────────────────────────────────────────
@@ -1423,25 +1443,6 @@ else
             warn "Snap not available — please install Lens manually from https://k8slens.dev/"
             mark_failed "lens"
         fi
-    fi
-fi
-
-# Ensure snapd is available (required for some optional installs like Termius/Lens)
-if command -v snap &>/dev/null; then
-    echo -e "${GREY}  ↷  snapd — already available${R}"
-    mark_skipped "snapd"
-else
-    info "snap not found — installing snapd (required for some optional apps)"
-    if run "$SUDO apt-get install -y $APT_QUIET snapd"; then
-        # enable and start snapd socket/service where applicable
-        run "$SUDO systemctl enable --now snapd.socket || true"
-        # install core snap to ensure classic support is present
-        run "$SUDO snap install core || true"
-        success "snapd installed"
-        mark_installed "snapd"
-    else
-        warn "Failed to install snapd — optional snap-based apps may not be available"
-        mark_failed "snapd"
     fi
 fi
 

@@ -49,6 +49,10 @@ See `GUIDE.md` for per-tool usage scenarios, quick tests, and examples to valida
 	- `-y` / `--yes` — assume yes for prompts.
 	- `--cleanup` — automatically remove installer backups/logs at end.
 
+### Recent changes
+- The installer now attempts to enable `thefuck`'s shell alias automatically when the tool is present by running `eval "$(thefuck --alias)"` for the current shell and adding a guarded entry to the provided `bashrc` so it persists across sessions.
+- Added an optional `WPS Office` install flow. If you choose to install WPS the installer will detect `LibreOffice`/`OpenOffice` and offer to remove them before proceeding. If `wps-office` is not available from `apt`, the installer will warn and point you to the official WPS Linux download page.
+
 Note: The installer checks for existing equivalents and will skip installing tools that are already present to avoid duplicate functionality.
 
 ## Welcome banner

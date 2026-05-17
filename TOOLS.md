@@ -66,6 +66,11 @@ Format: **Tool** — short description
 - **entr** — run arbitrary commands when files change (useful for rebuilds/tests). Example: `ls **/*.py | entr -r pytest`.
 - **thefuck** — suggests fixes for mistyped shell commands. After install, run `thefuck --alias` to add alias.
 - **tig** — ncurses-based git repository browser. Usage: `tig` or `tig status`.
+# thefuck: installer behavior
+The `bashrc` and `install.sh` were updated to attempt to enable the `thefuck` alias automatically when the binary is present. A guarded `eval "$(thefuck --alias)"` entry is added to the provided `bashrc` so the alias is active in interactive shells.
+
+- **wps-office** — optional Microsoft-compatible office suite (GUI).
+  - Installer: `install.sh` prompts `Install WPS Office (optional)? [y/N]`. If accepted and LibreOffice/OpenOffice is detected, the installer asks whether to remove those packages before installing WPS to avoid conflicts. If `wps-office` isn't available in `apt` the installer will warn and provide the official download URL.
 - **git-crypt** — transparent file encryption for git repositories. Usage: `git-crypt init`.
 - **rbenv / pyenv** — language version managers (Ruby / Python). Installer adds clones and prints instructions to source in `~/.bashrc`.
 - **neovim (nvim)** — modern Vim fork. Usage: `nvim <file>`.

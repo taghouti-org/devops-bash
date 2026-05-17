@@ -203,7 +203,7 @@ echo -e "${GREY}  This script will install:${R}"
 echo -e "${GREY}  Terminal  → vim, nvim, fzf, eza, bat, btop, zoxide, tmux, ripgrep, fd, delta, ncdu, tldr, autojump, entr, thefuck, tig${R}"
 echo -e "${GREY}  Dev       → git extras, jq, yq, httpie, make, lazygit, gh, direnv, asdf, pyenv, rbenv${R}"
 echo -e "${GREY}  DevOps    → docker, podman, lazydocker, kubectl, helm, k9s, kubectx/kubens, krew, kind, terraform, ansible${R}"
-echo -e "${GREY}  GUI/Extras→ VSCode, Google Chrome/Chromium, Postman, VLC, keepassxc (optional)${R}"
+echo -e "${GREY}  GUI/Extras→ VSCode, Google Chrome/Chromium, Postman, VLC, keepassxc, wps-office (optional)${R}"
 echo -e "${GREY}  Cloud     → aws-cli, gcloud (optional)${R}"
 echo ""
 read -rp "$(echo -e "${PINK}  Continue? [Y/n]:${R} ")" confirm

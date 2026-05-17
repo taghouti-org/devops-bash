@@ -87,6 +87,8 @@ This guide gives a short, practical usage note and quick test for each tool inst
     Fallback: `python3 -m pip install --user thefuck` (ensure `~/.local/bin` is on `PATH`).
   - Quick test: `thefuck --version` and add the alias with `eval "$(thefuck --alias)"`.
   - Try: run an invalid command like `gti status` then run `fuck` to apply the suggested fix.
+  
+  Note: the installer now attempts to enable `thefuck` for the current shell automatically when it installs or detects the binary, and also adds a guarded `eval "$(thefuck --alias)"` to the repo `bashrc` so the alias persists for interactive shells.
 
 - tig
   - When to use: terminal-based Git repository browser.
@@ -232,6 +234,11 @@ This guide gives a short, practical usage note and quick test for each tool inst
 - VLC
   - When to use: media playback.
   - Quick test: `vlc --version` and open a media file.
+
+- WPS Office
+  - When to use: lightweight, MS Office-compatible desktop suite for word processing, spreadsheets and presentations.
+  - Installer behavior: `install.sh` offers WPS as an optional install. If `LibreOffice` or `OpenOffice` is present the installer will prompt to remove them first to avoid conflicts. If `wps-office` is not available via `apt`, the installer warns and points you to https://www.wps.com/linux for manual installation.
+  - Quick test: after installation, run `wps` (or use your desktop menu) to launch WPS.
 
 - keepassxc
   - When to use: manage passwords locally with a GUI.

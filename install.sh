@@ -903,6 +903,57 @@ else
     fi
 fi
 
+# Postman (API GUI)
+if check_tool "postman" "postman"; then
+    echo -e "${GREY}  ↷  Postman — already installed${R}"
+    mark_skipped "postman"
+else
+    read -rp "$(echo -e "${PINK}  Install Postman (snap or tar)? [y/N]:${R} ")" do_postman
+    if [[ "${do_postman,,}" == "y" ]]; then
+        if command -v snap &>/dev/null; then
+            try "postman" $SUDO snap install postman
+        else
+            TEMP_TAR="/tmp/postman.tar.gz"
+            if curl -fsSL https://dl.pstmn.io/download/latest/linux64 -o "$TEMP_TAR" 2>/dev/null; then
+                $SUDO rm -rf /opt/Postman || true
+                $SUDO tar -xzf "$TEMP_TAR" -C /tmp/ || true
+                if [[ -d "/tmp/Postman" ]]; then
+                    $SUDO mv /tmp/Postman /opt/Postman
+                    $SUDO ln -sf /opt/Postman/Postman /usr/local/bin/postman
+                    success "Postman installed"
+                    mark_installed "postman"
+                    rm -f "$TEMP_TAR"
+                else
+                    warn "Postman archive extracted but expected /tmp/Postman missing"
+                    mark_failed "postman"
+                fi
+            else
+                warn "Failed to download Postman archive"
+                mark_failed "postman"
+            fi
+        fi
+    fi
+fi
+
+# VLC (media player)
+if check_tool "vlc" "vlc"; then
+    echo -e "${GREY}  ↷  VLC — already installed${R}"
+    mark_skipped "vlc"
+else
+    read -rp "$(echo -e "${PINK}  Install VLC media player? [y/N]:${R} ")" do_vlc
+    if [[ "${do_vlc,,}" == "y" ]]; then
+        if $SUDO apt-get install -y -qq vlc &>/dev/null; then
+            success "VLC installed"
+            mark_installed "vlc"
+        elif command -v snap &>/dev/null; then
+            try "vlc" $SUDO snap install vlc
+        else
+            warn "Could not install VLC (no apt or snap available)"
+            mark_failed "vlc"
+        fi
+    fi
+fi
+
 # ── Install .bashrc (deferred) ───────────────────────────────────
 section "Applying .bashrc"
 

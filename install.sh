@@ -1121,6 +1121,31 @@ else
     fi
 fi
 
+    # wps-office (optional — lightweight MS Office-compatible suite)
+    if check_tool "wps-office" "wps"; then :
+    else
+        read -rp "$(echo -e "${PINK}  Install WPS Office (optional)? [y/N]:${R} ")" do_wps
+        if [[ "${do_wps,,}" == "y" ]]; then
+            # If LibreOffice / OpenOffice is present, offer to remove it to avoid conflicts
+            if command -v soffice &>/dev/null || dpkg -l 2>/dev/null | grep -Ei 'libreoffice|openoffice' &>/dev/null; then
+                echo ""
+                read -rp "$(echo -e "${YELLOW}  Detected LibreOffice/OpenOffice. Remove it before installing WPS? [y/N]:${R} ")" remove_office
+                if [[ "${remove_office,,}" == "y" ]]; then
+                    info "Removing LibreOffice / OpenOffice..."
+                    $SUDO apt-get remove --purge -y libreoffice* openoffice* 2>/dev/null || true
+                    $SUDO apt-get autoremove -y --purge 2>/dev/null || true
+                fi
+            fi
+
+            info "Attempting to install WPS Office (via apt if available)..."
+            if try "wps-office" $SUDO apt-get install -y -qq wps-office; then :
+            else
+                warn "WPS not available in apt — skipping automatic download. You can install manually from https://www.wps.com/linux"
+                mark_failed "wps-office"
+            fi
+        fi
+    fi
+
 # hadolint, tfsec, kubeval removed — prefer external linters/plugins or add-on installs
 
 # taskwarrior (task management)

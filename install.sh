@@ -93,6 +93,12 @@ if [[ $EUID -ne 0 ]]; then
 else
     SUDO=""
 fi
+
+# Detect whether this script is being sourced or executed
+IS_SOURCED=0
+if [ "${BASH_SOURCE[0]:-}" != "${0:-}" ]; then
+    IS_SOURCED=1
+fi
 # Temporarily protect existing ~/.bashrc from being sourced during the
 # installer. Move it out of the way early so any child shells won't auto-run
 # user startup logic (e.g. starting tmux). It will be restored on abort.
@@ -781,5 +787,25 @@ else
     warn "bashrc not found at ${BASHRC_SRC}"
     warn "Make sure bashrc sits in the same folder as this script"
     warn "Installation complete — but ~/.bashrc was not updated" 
+fi
+
+# Offer to source the new ~/.bashrc when there were no failures
+if [[ ${#FAILED[@]} -eq 0 && -t 0 ]]; then
+    read -rp "$(echo -e "${PINK}  Source ~/.bashrc now? [y/N]:${R} ")" do_source
+    if [[ "${do_source,,}" == "y" ]]; then
+        if [[ "${IS_SOURCED:-0}" -eq 1 ]]; then
+            # Sourced installer: sourcing will affect the current shell
+            source "$HOME/.bashrc"
+            success "Sourced ~/.bashrc in current shell"
+        else
+            # Script was executed; sourcing here won't affect the caller.
+            echo -e "${YELLOW}Note: this installer was executed, not sourced.${R}"
+            echo -e "${YELLOW}To apply changes to your current shell, run:${R} ${CYAN}source ~/.bashrc${R}"
+            read -rp "$(echo -e "${PINK}  Start a new interactive shell now so the changes take effect? [y/N]:${R} ")" start_shell
+            if [[ "${start_shell,,}" == "y" ]]; then
+                exec "$SHELL" -l
+            fi
+        fi
+    fi
 fi
 

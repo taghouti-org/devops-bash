@@ -14,20 +14,20 @@ DEBUG=0
 APT_QUIET='-qq'
 
 # ── Colors ────────────────────────────────────────────────────────
-R='\033[0m'
-BOLD='\033[1m'
+R=$'\033[0m'
+BOLD=$'\033[1m'
 if [[ -t 0 ]]; then
     echo ""
 fi
-GREEN='\033[0;32m'
-BGREEN='\033[1;32m'
-CYAN='\033[0;36m'
-BCYAN='\033[1;36m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-GREY='\033[38;5;244m'
-NEON='\033[38;5;45m'
-PINK='\033[38;5;205m'
+GREEN=$'\033[0;32m'
+BGREEN=$'\033[1;32m'
+CYAN=$'\033[0;36m'
+BCYAN=$'\033[1;36m'
+YELLOW=$'\033[1;33m'
+RED=$'\033[0;31m'
+GREY=$'\033[38;5;244m'
+NEON=$'\033[38;5;45m'
+PINK=$'\033[38;5;205m'
 
 # ── Helpers ───────────────────────────────────────────────────────
 info()    { echo -e "${BCYAN}  ❯${R} $*"; }
@@ -477,8 +477,51 @@ else
     fi
 
     if [[ "${alt_retry:-0}" -ne 1 ]]; then
-        warn "Python3 extras install FAILED — continuing with remaining steps"
-        mark_failed "python3-venv"
+        info "Attempting install without python3-distutils (install pip/venv/dev headers only)"
+        if run "$SUDO apt-get install -y $APT_QUIET python3-pip python3-venv python3-dev"; then
+            success "Python3 extras installed (without python3-distutils)"
+            mark_installed "python3-venv"
+
+            # Ensure pip is usable: try ensurepip, else get-pip.py
+            if ! command -v pip3 &>/dev/null; then
+                info "pip not found — trying python3 -m ensurepip --upgrade"
+                if run "python3 -m ensurepip --upgrade"; then
+                    info "ensurepip succeeded"
+                else
+                    info "ensurepip failed — downloading get-pip.py"
+                    if run "curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py"; then
+                        run "sudo python3 /tmp/get-pip.py" || run "python3 /tmp/get-pip.py"
+                    fi
+                fi
+            fi
+
+            # Upgrade pip/setuptools/wheel only if we're inside a virtualenv; otherwise skip and ensure pipx
+            in_venv=0
+            if command -v python3 &>/dev/null; then
+                in_venv=$(python3 - <<'PY'
+import sys, os
+print(1 if getattr(sys, 'base_prefix', None) != getattr(sys, 'prefix', None) or 'VIRTUAL_ENV' in os.environ else 0)
+PY
+)
+            fi
+            if [[ "$in_venv" -eq 1 ]]; then
+                if [[ "${DEBUG:-0}" -eq 1 ]]; then
+                    python3 -m pip install --upgrade pip setuptools wheel || true
+                else
+                    python3 -m pip install --upgrade pip setuptools wheel 2>/dev/null || true
+                fi
+            else
+                warn "Not in a virtualenv; skipping system pip upgrades (PEP 668 environments)"
+                # Ensure pipx is available for user-level installs
+                if ! command -v pipx &>/dev/null; then
+                    info "Installing pipx for user-level Python apps"
+                    run "$SUDO apt-get install -y $APT_QUIET pipx || true"
+                fi
+            fi
+        else
+            warn "Python3 extras install FAILED — continuing with remaining steps"
+            mark_failed "python3-venv"
+        fi
     fi
 fi
 

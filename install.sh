@@ -604,6 +604,28 @@ else
     fi
 fi
 
+# Termius (optional SSH client)
+if check_tool "termius" "termius"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install Termius SSH client? [y/N]:${R} ")" do_termius
+    if [[ "${do_termius,,}" == "y" ]]; then
+        info "Installing Termius..."
+        if command -v snap &>/dev/null; then
+            if run "$SUDO snap install termius-app --classic"; then
+                success "Termius installed"
+                mark_installed "termius"
+            else
+                warn "Termius snap install failed"
+                mark_failed "termius"
+            fi
+        else
+            warn "snap not available — cannot install Termius automatically"
+            echo -e "${YELLOW}  ⚠${R}  Please install Termius manually from: https://www.termius.com/download"
+            mark_failed "termius"
+        fi
+    fi
+fi
+
 
 # ── 4. DOCKER ────────────────────────────────────────────────────
 section "Docker"

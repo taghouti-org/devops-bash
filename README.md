@@ -34,7 +34,7 @@ The installer prompts for optional steps like AWS CLI and Starship.
 - Terminal utilities: `vim`, `nvim`, `fzf`, `eza`, `bat`, `btop`, `zoxide`, `tmux`, `ripgrep`, `fd-find`, `delta`, `ncdu`, `autojump`, `entr`, `thefuck`, `tig`
 - Dev tools: `jq`, `yq`, `httpie`, `make`, Python extras, `nvm` (installer), `pyenv`, `rbenv`, `gh`, `direnv`, `asdf`, `tldr`, `lazygit`, `tig`, `git-crypt`
 - DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `krew`, `kind`, `podman`, `terraform`, `ansible`
-- Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc)
+- Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc, Termius)
 
 ## Usage Guide
 

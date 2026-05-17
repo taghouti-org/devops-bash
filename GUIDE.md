@@ -235,6 +235,11 @@ This guide gives a short, practical usage note and quick test for each tool inst
   - When to use: media playback.
   - Quick test: `vlc --version` and open a media file.
 
+- Termius
+  - When to use: SSH client with GUI and terminal-friendly features (snippets, host sync).
+  - Installer: optional via `snap` (`snap install termius-app --classic`) when `snap` is available; otherwise install from https://www.termius.com/download
+  - Quick test: launch Termius app from desktop or run `termius` if the CLI is installed.
+
 - WPS Office
   - When to use: lightweight, MS Office-compatible desktop suite for word processing, spreadsheets and presentations.
   - Installer behavior: `install.sh` offers WPS as an optional install. If `LibreOffice` or `OpenOffice` is present the installer will prompt to remove them first to avoid conflicts. If `wps-office` is not available via `apt`, the installer warns and points you to https://www.wps.com/linux for manual installation.

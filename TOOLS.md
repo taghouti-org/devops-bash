@@ -55,6 +55,7 @@ Format: **Tool** — short description
 
 - **Postman** — GUI API client. The installer can optionally install Postman via `snap` or tarball. Launch via application menu or `postman` binary if installed.
 - **VLC** — Media player available via apt or snap. Launch via `vlc`.
+- **Termius** — GUI + CLI SSH client with host management and snippets. Installer: optional via `snap install termius-app --classic` when `snap` is available. Manual downloads available from https://www.termius.com/download
 
 - **starship** — optional prompt engine. If you install and enable it, replace the prompt block in `~/.bashrc` with `eval "$(starship init bash)"`.
 

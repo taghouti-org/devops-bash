@@ -121,8 +121,8 @@ fi
 TMP_SHIM_DIR=$(mktemp -d -p /tmp devops-bin.XXXX)
 cat > "$TMP_SHIM_DIR/tmux" <<'TMUXSHIM'
 #!/usr/bin/env bash
-echo "[DEVOPS INSTALLER] tmux called: $(date +%Y-%m-%dT%H:%M:%S) CMD: $0 ARGS: $* PID: $$" >> /tmp/devops-tmux-invocations.log
-echo "[DEVOPS INSTALLER] tmux invocation intercepted during install; skipping actual tmux launch." >> /tmp/devops-tmux-invocations.log
+# Intercept tmux calls during the installer; remain silent and exit success.
+# This avoids creating log files during each run.
 exit 0
 TMUXSHIM
 chmod +x "$TMP_SHIM_DIR/tmux"

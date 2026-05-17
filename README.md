@@ -31,14 +31,10 @@ The installer prompts for optional steps like AWS CLI and Starship.
 
 ## What it installs (high level)
 
-- Terminal utilities: `vim`, `fzf`, `eza`, `bat`, `btop`, `zoxide`, `tmux`, `ripgrep`, `fd-find`, `delta`, `ncdu`
-- Dev tools: `jq`, `yq`, `httpie`, `make`, Python extras, `nvm` (installer), Node tooling helpers
-- DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `terraform`, `ansible`
-- Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner)
- - Terminal utilities: `vim`, `nvim`, `fzf`, `eza`, `bat`, `btop`, `zoxide`, `tmux`, `ripgrep`, `fd-find`, `delta`, `ncdu`, `autojump`, `entr`, `skim` (sk)
- - Dev tools: `jq`, `yq`, `httpie`, `make`, Python extras, `nvm` (installer), `nvim`, `neovim`, `pyenv`, `rbenv`, `gh`, `direnv`, `asdf`, `tldr`, `lazygit`, `tig`, `git-crypt`
- - DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `krew`, `kind`, `podman`, `terraform`, `ansible`, `kubeval`, `tfsec`, `hadolint`
- - Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc)
+- Terminal utilities: `vim`, `nvim`, `fzf`, `eza`, `bat`, `btop`, `zoxide`, `tmux`, `ripgrep`, `fd-find`, `delta`, `ncdu`, `autojump`, `entr`, `thefuck`, `tig`
+- Dev tools: `jq`, `yq`, `httpie`, `make`, Python extras, `nvm` (installer), `pyenv`, `rbenv`, `gh`, `direnv`, `asdf`, `tldr`, `lazygit`, `tig`, `git-crypt`
+- DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `krew`, `kind`, `podman`, `terraform`, `ansible`
+- Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc)
 
 ### New additions and notes
 - Optional GUI / desktop apps: `Postman`, `VLC`, `VSCode`, `Google Chrome` (installed only if requested).

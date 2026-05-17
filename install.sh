@@ -200,9 +200,9 @@ EOF
 echo -e "${R}"
 
 echo -e "${GREY}  This script will install:${R}"
-echo -e "${GREY}  Terminal  → vim, nvim, fzf, eza, bat, btop, zoxide, tmux, ripgrep, fd, delta, ncdu, tldr, autojump, entr, sk, thefuck, tig${R}"
+echo -e "${GREY}  Terminal  → vim, nvim, fzf, eza, bat, btop, zoxide, tmux, ripgrep, fd, delta, ncdu, tldr, autojump, entr, thefuck, tig${R}"
 echo -e "${GREY}  Dev       → git extras, jq, yq, httpie, make, lazygit, gh, direnv, asdf, pyenv, rbenv${R}"
-echo -e "${GREY}  DevOps    → docker, podman, lazydocker, kubectl, helm, k9s, kubectx/kubens, krew, kind, terraform, ansible, hadolint, tfsec, kubeval${R}"
+echo -e "${GREY}  DevOps    → docker, podman, lazydocker, kubectl, helm, k9s, kubectx/kubens, krew, kind, terraform, ansible${R}"
 echo -e "${GREY}  GUI/Extras→ VSCode, Google Chrome/Chromium, Postman, VLC, keepassxc (optional)${R}"
 echo -e "${GREY}  Cloud     → aws-cli, gcloud (optional)${R}"
 echo ""
@@ -949,12 +949,7 @@ else
     try "entr" $SUDO apt-get install -y -qq entr
 fi
 
-# skim (sk) — fuzzy filter alternative to fzf
-if check_tool "sk" "sk" "skim"; then :
-else
-    info "Installing skim (sk)..."
-    try "sk" $SUDO apt-get install -y -qq skim
-fi
+# skim removed — use fzf (already included)
 
 # tig (ncurses git interface)
 if check_tool "tig" "tig"; then :
@@ -1032,26 +1027,7 @@ else
     fi
 fi
 
-# hadolint (Dockerfile linter)
-if check_tool "hadolint" "hadolint"; then :
-else
-    info "Installing hadolint..."
-    try "hadolint" $SUDO apt-get install -y -qq hadolint
-fi
-
-# tfsec (terraform security scanner)
-if check_tool "tfsec" "tfsec"; then :
-else
-    info "Installing tfsec..."
-    try "tfsec" $SUDO apt-get install -y -qq tfsec
-fi
-
-# kubeval (kubernetes manifest validator)
-if check_tool "kubeval" "kubeval"; then :
-else
-    info "Installing kubeval..."
-    try "kubeval" $SUDO apt-get install -y -qq kubeval
-fi
+# hadolint, tfsec, kubeval removed — prefer external linters/plugins or add-on installs
 
 # taskwarrior (task management)
 if check_tool "task" "task"; then :

@@ -379,7 +379,7 @@ fi
 
 # Python extras
 info "Installing Python extras (pip, venv, dev headers)..."
-$SUDO apt-get install -y -qq python3-pip python3-venv python3-dev &>/dev/null
+$SUDO apt-get install -y -qq python3-pip python3-venv python3-dev python3-distutils &>/dev/null
 success "Python3 extras ready"
 mark_installed "python3-venv"
 
@@ -963,8 +963,73 @@ fi
 # thefuck (shell command suggestions)
 if check_tool "thefuck" "thefuck"; then :
 else
-    info "Installing thefuck..."
-    try "thefuck" $SUDO apt-get install -y -qq thefuck
+    info "Installing thefuck (preferred: pipx) ..."
+    # Prefer pipx for isolated, up-to-date Python CLIs. Fall back to apt or pip3 --user.
+        if command -v pipx &>/dev/null; then
+            try "thefuck" pipx install thefuck
+            # Ensure setuptools (which provides distutils backports) is available in the pipx venv
+            info "Ensuring setuptools is available inside the thefuck pipx venv..."
+            pipx inject thefuck setuptools &>/dev/null || true
+            # Some versions of Python remove 'imp'; add a small compatibility shim
+            for base in "$HOME/.local/share/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs"; do
+                venv_dir="$base/thefuck"
+                if [[ -d "$venv_dir" ]]; then
+                    if [[ -x "$venv_dir/bin/python" ]]; then
+                        site_pkg=$("$venv_dir/bin/python" -c "import site,sys,os; s=site.getsitepackages(); print(s[0] if s else os.path.join(sys.prefix,'lib', 'python'+'.'.join(map(str,sys.version_info[:2])), 'site-packages'))")
+                        if [[ -d "$site_pkg" ]]; then
+                            shim="$site_pkg/imp.py"
+                            if [[ ! -f "$shim" ]]; then
+                                cat > "$shim" <<'IMP_SHIM'
+"""Minimal shim for Python's deprecated 'imp' module used by older packages.
+Provides load_source() using importlib for compatibility.
+"""
+import importlib.util
+import sys
+def load_source(name, pathname):
+    spec = importlib.util.spec_from_file_location(name, pathname)
+    module = importlib.util.module_from_spec(spec)
+    loader = spec.loader
+    if loader is None:
+        raise ImportError("cannot load %s" % name)
+    loader.exec_module(module)
+    sys.modules[name] = module
+    return module
+IMP_SHIM
+                                success "Added imp shim to thefuck pipx venv"
+                            fi
+                        fi
+                    fi
+                fi
+            done
+        else
+        info "pipx not found — attempting to install pipx via apt"
+        if $SUDO apt-get install -y -qq pipx python3-venv &>/dev/null; then
+            success "pipx installed"
+            if command -v pipx &>/dev/null; then
+                try "thefuck" pipx install thefuck
+            else
+                warn "pipx still not on PATH — will try pip3 --user"
+                if python3 -m pip install --user thefuck &>/dev/null; then
+                    success "thefuck installed via pip3 --user"
+                    mark_installed "thefuck"
+                    echo -e "${YELLOW}  ⚠  Ensure ~/.local/bin is on your PATH to run 'thefuck'${R}"
+                else
+                    warn "Failed to install thefuck via pip3 --user"
+                    mark_failed "thefuck"
+                fi
+            fi
+        else
+            warn "Failed to install pipx via apt — trying pip3 --user"
+            if python3 -m pip install --user thefuck &>/dev/null; then
+                success "thefuck installed via pip3 --user"
+                mark_installed "thefuck"
+                echo -e "${YELLOW}  ⚠  Ensure ~/.local/bin is on your PATH to run 'thefuck'${R}"
+            else
+                warn "Failed to install thefuck via pip3 --user"
+                mark_failed "thefuck"
+            fi
+        fi
+    fi
 fi
 
 # entr (run arbitrary commands when files change)

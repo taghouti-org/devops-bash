@@ -74,6 +74,19 @@ This guide gives a short, practical usage note and quick test for each tool inst
   - When to use: get suggestions for fixing mistyped commands.
   - Quick test: `thefuck --version` and follow post-install alias instructions (`eval $(thefuck --alias)`).
   - Try: run an invalid command like `gti status` then run `fuck`.
+- thefuck
+  - When to use: get suggestions for fixing mistyped commands.
+  - Note: the Ubuntu `thefuck` apt package can be outdated or broken on newer Python versions (ModuleNotFoundError: No module named 'imp').
+  - Recommended install: use `pipx` for isolated installs:
+    ```bash
+    # install pipx (if missing)
+    sudo apt-get install -y pipx python3-venv
+    pipx ensurepath
+    pipx install thefuck
+    ```
+    Fallback: `python3 -m pip install --user thefuck` (ensure `~/.local/bin` is on `PATH`).
+  - Quick test: `thefuck --version` and add the alias with `eval "$(thefuck --alias)"`.
+  - Try: run an invalid command like `gti status` then run `fuck` to apply the suggested fix.
 
 - tig
   - When to use: terminal-based Git repository browser.

@@ -182,41 +182,73 @@ fi
 # ║  MODERN TOOL ALIASES (eza, bat, btop)                        ║
 # ╚══════════════════════════════════════════════════════════════╝
 
-# Detect whether a Nerd Font is installed (used for icons). If not,
-# fall back to non-icon aliases for a clean terminal appearance.
-USE_ICONS=0
+ # Detect whether a Nerd Font is installed (used for icons). If not,
+ # fall back to non-icon aliases for a clean terminal appearance.
+DEVOPS_USE_ICONS=0
 if command -v fc-list &>/dev/null; then
     if fc-list | grep -i 'nerd' &>/dev/null || fc-list | grep -i 'jetbrains' &>/dev/null; then
-        USE_ICONS=1
+        DEVOPS_USE_ICONS=1
     fi
 else
     if [[ -d "$HOME/.local/share/fonts" ]] && ls "$HOME/.local/share/fonts" | grep -i 'nerd' &>/dev/null; then
-        USE_ICONS=1
+        DEVOPS_USE_ICONS=1
     fi
 fi
 
-if command -v eza &>/dev/null; then
-    if [[ $USE_ICONS -eq 1 ]]; then
-        alias ls='eza --icons --group-directories-first'
-        alias ll='eza -lah --icons --group-directories-first --git'
-        alias la='eza -a --icons'
-        alias lt='eza -T --icons --git-ignore'      # tree
-        alias llt='eza -lT --icons --git-ignore'    # detailed tree
-        alias l='eza -1 --icons'
+# Function to (re)define the ls aliases based on current DEVOPS_USE_ICONS
+set_icon_aliases() {
+    if command -v eza &>/dev/null; then
+        if [[ "$DEVOPS_USE_ICONS" -eq 1 ]]; then
+            alias ls='eza --icons --group-directories-first'
+            alias ll='eza -lah --icons --group-directories-first --git'
+            alias la='eza -a --icons'
+            alias lt='eza -T --icons --git-ignore'
+            alias llt='eza -lT --icons --git-ignore'
+            alias l='eza -1 --icons'
+        else
+            alias ls='eza --group-directories-first'
+            alias ll='eza -lah --group-directories-first --git'
+            alias la='eza -a'
+            alias lt='eza -T --git-ignore'
+            alias llt='eza -lT --git-ignore'
+            alias l='eza -1'
+        fi
     else
-        alias ls='eza --group-directories-first'
-        alias ll='eza -lah --group-directories-first --git'
-        alias la='eza -a'
-        alias lt='eza -T --git-ignore'      # tree
-        alias llt='eza -lT --git-ignore'    # detailed tree
-        alias l='eza -1'
+        alias ls='ls --color=auto'
+        alias ll='ls -alF'
+        alias la='ls -A'
+        alias l='ls -CF'
     fi
-else
-    alias ls='ls --color=auto'
-    alias ll='ls -alF'
-    alias la='ls -A'
-    alias l='ls -CF'
-fi
+}
+
+# Helpers to toggle icons at runtime
+enable_icons() {
+    DEVOPS_USE_ICONS=1
+    set_icon_aliases
+    echo "Icons enabled (aliases updated). If your terminal font supports icons, they will display now."
+}
+
+disable_icons() {
+    DEVOPS_USE_ICONS=0
+    set_icon_aliases
+    echo "Icons disabled (aliases updated)."
+}
+
+# Test whether icons render correctly in this terminal
+test_icons() {
+    echo
+    echo "Icon glyph test:"
+    echo -e "  ⚡        🐚"
+    echo
+    if command -v eza &>/dev/null; then
+        echo "eza preview (first 6 entries):"
+        eza -1 --icons --group-directories-first | sed -n '1,6p' || true
+    fi
+    echo
+}
+
+# Initialize aliases now
+set_icon_aliases
 
 # bat → syntax-highlighted cat
 if command -v batcat &>/dev/null; then

@@ -93,8 +93,49 @@ if [[ $EUID -ne 0 ]]; then
 else
     SUDO=""
 fi
+# Temporarily protect existing ~/.bashrc from being sourced during the
+# installer. Move it out of the way early so any child shells won't auto-run
+# user startup logic (e.g. starting tmux). It will be restored on abort.
+if [[ -f "$HOME/.bashrc" ]]; then
+    ORIGINAL_BASHRC="$HOME/.bashrc"
+    PREINSTALL_BACKUP="$HOME/.bashrc.preinstall.$(date +%Y%m%d_%H%M%S)"
+    mv "$ORIGINAL_BASHRC" "$PREINSTALL_BACKUP" 2>/dev/null || true
+    success "Temporarily moved existing ~/.bashrc → ${PREINSTALL_BACKUP}"
 
-# ── Banner ────────────────────────────────────────────────────────
+    restore_on_exit() {
+        if [[ -f "${PREINSTALL_BACKUP}" && ! -f "$HOME/.bashrc" ]]; then
+            mv -f "${PREINSTALL_BACKUP}" "$HOME/.bashrc" 2>/dev/null || true
+            echo -e "${YELLOW}Installer aborted — original ~/.bashrc restored${R}"
+        fi
+    }
+    trap restore_on_exit EXIT
+else
+    PREINSTALL_BACKUP=""
+fi
+
+# ── Temporary tmux shim to catch accidental launches ───────────────
+# Create a small bin dir early in PATH with a harmless `tmux` shim that
+# logs invocations to /tmp/devops-tmux-invocations.log and exits. This
+# prevents user startup hooks from launching real tmux sessions during
+# package installs. The shim is removed when the script exits.
+TMP_SHIM_DIR=$(mktemp -d -p /tmp devops-bin.XXXX)
+cat > "$TMP_SHIM_DIR/tmux" <<'TMUXSHIM'
+#!/usr/bin/env bash
+echo "[DEVOPS INSTALLER] tmux called: $(date +%Y-%m-%dT%H:%M:%S) CMD: $0 ARGS: $* PID: $$" >> /tmp/devops-tmux-invocations.log
+echo "[DEVOPS INSTALLER] tmux invocation intercepted during install; skipping actual tmux launch." >> /tmp/devops-tmux-invocations.log
+exit 0
+TMUXSHIM
+chmod +x "$TMP_SHIM_DIR/tmux"
+export PATH="$TMP_SHIM_DIR:$PATH"
+info "Temporary tmux shim installed (will be removed at script exit)"
+
+cleanup_tmux_shim() {
+    rm -rf "${TMP_SHIM_DIR:-}" 2>/dev/null || true
+}
+trap 'restore_on_exit; cleanup_tmux_shim' EXIT
+
+
+# ── Banner ───────────────────────────────────────────────────────
 clear
 echo -e "${NEON}"
 cat << 'EOF'
@@ -125,6 +166,8 @@ echo ""
 
 # Note: .bashrc will be installed at the end of the script to avoid
 # triggering interactive config during package installation.
+
+
 
 # ── 1. APT BOOTSTRAP ─────────────────────────────────────────────
 section "APT Bootstrap"
@@ -297,7 +340,7 @@ if [[ -d "$HOME/.nvm" ]]; then
 else
     info "Installing nvm (Node Version Manager)..."
     NVM_VERSION="v0.39.7"
-    if curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash &>/dev/null; then
+    if curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash --noprofile --norc &>/dev/null; then
         success "nvm ${NVM_VERSION} installed  (~/.nvm)"
         mark_installed "nvm"
         echo -e "${GREY}       run : source ~/.bashrc && nvm install --lts${R}"
@@ -388,7 +431,7 @@ if check_tool "helm"; then :
 else
     info "Installing helm..."
     if curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
-        | bash &>/dev/null; then
+        | bash --noprofile --norc &>/dev/null; then
         success "helm installed"
         mark_installed "helm"
     else

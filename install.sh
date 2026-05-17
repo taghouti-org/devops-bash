@@ -9,6 +9,9 @@ set -euo pipefail
 SUDO=""
 PREINSTALL_BACKUP=""
 TMP_SHIM_DIR=""
+DEBUG=0
+# When quiet, pass '-qq' to apt-get; when DEBUG=1 we clear this so apt prints output
+APT_QUIET='-qq'
 
 # ── Colors ────────────────────────────────────────────────────────
 R='\033[0m'
@@ -45,12 +48,32 @@ mark_failed()    { FAILED+=("$1"); }
 # Run a command, capture failure without exiting
 try() {
     local label="$1"; shift
-    if "$@" &>/dev/null; then
-        success "$label installed"
-        mark_installed "$label"
+    if [[ "${DEBUG:-0}" -eq 1 ]]; then
+        if "$@"; then
+            success "$label installed"
+            mark_installed "$label"
+        else
+            error "$label FAILED — check manually"
+            mark_failed "$label"
+        fi
     else
-        error "$label FAILED — check manually"
-        mark_failed "$label"
+        if "$@" &>/dev/null; then
+            success "$label installed"
+            mark_installed "$label"
+        else
+            error "$label FAILED — check manually"
+            mark_failed "$label"
+        fi
+    fi
+}
+
+# Run a shell command string; hide output unless DEBUG is enabled
+run() {
+    local cmd="$*"
+    if [[ "${DEBUG:-0}" -eq 1 ]]; then
+        eval "$cmd"
+    else
+        eval "$cmd" &>/dev/null
     fi
 }
 
@@ -64,6 +87,8 @@ ASSUME_YES=0
 CLEANUP_AUTO=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -d|--debug)
+            DEBUG=1; shift ;;
         -y|--yes)
             ASSUME_YES=1; shift ;;
         --cleanup|--remove-backups)
@@ -74,6 +99,12 @@ while [[ $# -gt 0 ]]; do
             break ;;
     esac
 done
+
+# If debug requested, make apt verbose and enable xtrace for easier debugging
+if [[ "${DEBUG:-0}" -eq 1 ]]; then
+    APT_QUIET=''
+    set -x
+fi
 
 # check_tool NAME [BINARY]
 #   If the tool is found: print path + version, mark skipped, return 0 (→ skip install)
@@ -243,34 +274,34 @@ section "Terminal Tools"
 if check_tool "vim"; then :
 else
     info "Installing vim..."
-    try "vim" $SUDO apt-get install -y -qq vim
+    try "vim" $SUDO apt-get install -y $APT_QUIET vim
 fi
 
 # fzf
 if check_tool "fzf"; then :
 else
     info "Installing fzf..."
-    try "fzf" $SUDO apt-get install -y -qq fzf
+    try "fzf" $SUDO apt-get install -y $APT_QUIET fzf
 fi
 
 # eza (modern ls)
 if check_tool "eza"; then :
 else
     info "Installing eza..."
-    try "eza" $SUDO apt-get install -y -qq eza
+    try "eza" $SUDO apt-get install -y $APT_QUIET eza
 fi
 
 # bat (modern cat) — ubuntu names it batcat
 if check_tool "bat" "bat" "batcat"; then :
 else
     info "Installing bat..."
-    $SUDO apt-get install -y -qq bat &>/dev/null && {
+    if $SUDO apt-get install -y $APT_QUIET bat; then
         success "bat installed"
         mark_installed "bat"
-    } || {
+    else
         error "bat install FAILED"
         mark_failed "bat"
-    }
+    fi
 fi
 # Always ensure the 'bat' symlink exists when only batcat is present
 if has batcat && ! has bat; then
@@ -282,36 +313,42 @@ fi
 if check_tool "btop"; then :
 else
     info "Installing btop..."
-    try "btop" $SUDO apt-get install -y -qq btop
+    try "btop" $SUDO apt-get install -y $APT_QUIET btop
 fi
 
 # zoxide (smart cd)
 if check_tool "zoxide"; then :
 else
     info "Installing zoxide..."
-    try "zoxide" $SUDO apt-get install -y -qq zoxide
+    try "zoxide" $SUDO apt-get install -y $APT_QUIET zoxide
 fi
 
 # tmux
 if check_tool "tmux"; then :
 else
     info "Installing tmux..."
-    try "tmux" $SUDO apt-get install -y -qq tmux
+    try "tmux" $SUDO apt-get install -y $APT_QUIET tmux
 fi
 
 # ripgrep (fast grep)
 if check_tool "ripgrep" "rg"; then :
 else
     info "Installing ripgrep..."
-    try "ripgrep" $SUDO apt-get install -y -qq ripgrep
+    try "ripgrep" $SUDO apt-get install -y $APT_QUIET ripgrep
 fi
 
 # fd-find (fast find, alias: fd)
 if check_tool "fd-find" "fd" "fdfind"; then :
 else
     info "Installing fd-find..."
-    $SUDO apt-get install -y -qq fd-find &>/dev/null
-    $SUDO ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
+    if $SUDO apt-get install -y $APT_QUIET fd-find; then
+        $SUDO ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
+        success "fd-find installed  (fd → /usr/bin/fdfind)"
+        mark_installed "fd-find"
+    else
+        warn "fd-find install failed"
+        mark_failed "fd-find"
+    fi
     success "fd-find installed  (fd → /usr/bin/fdfind)"
     mark_installed "fd-find"
 fi
@@ -320,21 +357,21 @@ fi
 if check_tool "delta"; then :
 else
     info "Installing delta (better git diff)..."
-    try "delta" $SUDO apt-get install -y -qq git-delta
+    try "delta" $SUDO apt-get install -y $APT_QUIET git-delta
 fi
 
 # ncdu (disk usage explorer)
 if check_tool "ncdu"; then :
 else
     info "Installing ncdu..."
-    try "ncdu" $SUDO apt-get install -y -qq ncdu
+    try "ncdu" $SUDO apt-get install -y $APT_QUIET ncdu
 fi
 
 # tldr (concise CLI examples)
 if check_tool "tldr"; then :
 else
     info "Installing tldr..."
-    try "tldr" $SUDO apt-get install -y -qq tldr
+    try "tldr" $SUDO apt-get install -y $APT_QUIET tldr
 fi
 
 # neofetch (welcome banner)
@@ -342,7 +379,7 @@ fi
 if check_tool "neofetch"; then :
 else
     info "Installing neofetch..."
-    try "neofetch" $SUDO apt-get install -y -qq neofetch
+    try "neofetch" $SUDO apt-get install -y $APT_QUIET neofetch
 fi
 
 
@@ -353,7 +390,7 @@ section "Development Tools"
 if check_tool "jq"; then :
 else
     info "Installing jq..."
-    try "jq" $SUDO apt-get install -y -qq jq
+    try "jq" $SUDO apt-get install -y $APT_QUIET jq
 fi
 
 # yq (YAML processor) — prefer mikefarah's v4 binary (modern features)
@@ -369,7 +406,7 @@ if command -v yq &>/dev/null; then
             mark_installed "yq-mikefarah"
         else
             warn "Failed to download mikefarah yq — falling back to distro package"
-            try "yq" $SUDO apt-get install -y -qq yq
+            try "yq" $SUDO apt-get install -y $APT_QUIET yq
         fi
     fi
 else
@@ -379,7 +416,7 @@ else
         mark_installed "yq-mikefarah"
     else
         warn "Failed to fetch mikefarah yq — trying distro package via apt"
-        try "yq" $SUDO apt-get install -y -qq yq
+        try "yq" $SUDO apt-get install -y $APT_QUIET yq
     fi
 fi
 
@@ -387,19 +424,19 @@ fi
 if check_tool "httpie" "http" "httpie"; then :
 else
     info "Installing httpie..."
-    try "httpie" $SUDO apt-get install -y -qq httpie
+    try "httpie" $SUDO apt-get install -y $APT_QUIET httpie
 fi
 
 # make
 if check_tool "make"; then :
 else
     info "Installing make..."
-    try "make" $SUDO apt-get install -y -qq make
+    try "make" $SUDO apt-get install -y $APT_QUIET make
 fi
 
 # Python extras
 info "Installing Python extras (pip, venv, dev headers)..."
-if $SUDO apt-get install -y -qq python3-pip python3-venv python3-dev python3-distutils &>/dev/null; then
+if $SUDO apt-get install -y $APT_QUIET python3-pip python3-venv python3-dev python3-distutils; then
     success "Python3 extras ready"
     mark_installed "python3-venv"
 else
@@ -417,7 +454,7 @@ if [[ -d "$HOME/.nvm" ]]; then
 else
     info "Installing nvm (Node Version Manager)..."
     NVM_VERSION="v0.39.7"
-    if curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash --noprofile --norc &>/dev/null; then
+    if run "curl -fsSL \"https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh\" | bash --noprofile --norc"; then
         success "nvm ${NVM_VERSION} installed  (~/.nvm)"
         mark_installed "nvm"
         echo -e "${GREY}       run : source ~/.bashrc && nvm install --lts${R}"
@@ -433,7 +470,7 @@ else
     read -rp "$(echo -e "${PINK}  Install GitHub CLI (gh)? [y/N]:${R} ")" do_gh
     if [[ "${do_gh,,}" == "y" ]]; then
         info "Installing GitHub CLI..."
-        if $SUDO apt-get install -y -qq gh &>/dev/null; then
+        if $SUDO apt-get install -y $APT_QUIET gh; then
             success "gh installed"
             mark_installed "gh"
         else
@@ -475,7 +512,7 @@ else
     read -rp "$(echo -e "${PINK}  Install asdf (universal version manager)? [y/N]:${R} ")" do_asdf
     if [[ "${do_asdf,,}" == "y" ]]; then
         info "Installing asdf..."
-        if git clone --depth 1 https://github.com/asdf-vm/asdf.git "$HOME/.asdf" &>/dev/null; then
+        if run "git clone --depth 1 https://github.com/asdf-vm/asdf.git \"$HOME/.asdf\""; then
             success "asdf installed to $HOME/.asdf"
             mark_installed "asdf"
             echo -e "${GREY}  → Add to ~/.bashrc: source \$HOME/.asdf/asdf.sh${R}"
@@ -502,18 +539,18 @@ else
 https://download.docker.com/linux/ubuntu \
 $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
         | $SUDO tee /etc/apt/sources.list.d/docker.list > /dev/null
-    $SUDO apt-get update -qq
+    $SUDO apt-get update $APT_QUIET
     info "Installing Docker Engine + Compose..."
-    if $SUDO apt-get install -y -qq \
+    if $SUDO apt-get install -y $APT_QUIET \
         docker-ce docker-ce-cli containerd.io \
-        docker-buildx-plugin docker-compose-plugin &>/dev/null; then
+        docker-buildx-plugin docker-compose-plugin; then
         success "Docker installed"
         mark_installed "docker"
         if [[ $EUID -ne 0 ]]; then
             $SUDO usermod -aG docker "$USER" 2>/dev/null || true
             warn "Added $USER to 'docker' group — log out & back in to use docker without sudo"
         fi
-        $SUDO systemctl enable --now docker &>/dev/null || true
+        run "$SUDO systemctl enable --now docker" || true
     else
         error "Docker install failed"
         mark_failed "docker"
@@ -547,7 +584,7 @@ else
     read -rp "$(echo -e "${PINK}  Install Podman (optional)? [y/N]:${R} ")" do_podman
     if [[ "${do_podman,,}" == "y" ]]; then
         info "Installing podman..."
-        if $SUDO apt-get install -y -qq podman &>/dev/null; then
+        if $SUDO apt-get install -y $APT_QUIET podman; then
             success "podman installed"
             mark_installed "podman"
         else
@@ -570,8 +607,8 @@ else
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
 https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" \
         | $SUDO tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
-    $SUDO apt-get update -qq
-    if $SUDO apt-get install -y -qq kubectl &>/dev/null; then
+    $SUDO apt-get update $APT_QUIET
+    if $SUDO apt-get install -y $APT_QUIET kubectl; then
         success "kubectl installed"
         mark_installed "kubectl"
     else
@@ -584,8 +621,7 @@ fi
 if check_tool "helm"; then :
 else
     info "Installing helm..."
-    if curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
-        | bash --noprofile --norc &>/dev/null; then
+    if run "curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash --noprofile --norc"; then
         success "helm installed"
         mark_installed "helm"
     else
@@ -636,17 +672,15 @@ fi
 if check_tool "kubectx/kubens" "kubectx"; then :
 else
     info "Installing kubectx & kubens..."
-    if $SUDO apt-get install -y -qq kubectx &>/dev/null; then
+    if $SUDO apt-get install -y $APT_QUIET kubectx; then
         success "kubectx + kubens installed"
         mark_installed "kubectx/kubens"
     else
         warn "kubectx not in apt — trying manual install..."
         KUBECTX_VER="0.9.5"
         BASE="https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VER}"
-        if curl -fsSL "${BASE}/kubectx_v${KUBECTX_VER}_linux_x86_64.tar.gz" \
-            | $SUDO tar -xz -C /usr/local/bin/ kubectx 2>/dev/null && \
-           curl -fsSL "${BASE}/kubens_v${KUBECTX_VER}_linux_x86_64.tar.gz" \
-            | $SUDO tar -xz -C /usr/local/bin/ kubens 2>/dev/null; then
+        if run "curl -fsSL \"${BASE}/kubectx_v${KUBECTX_VER}_linux_x86_64.tar.gz\" | $SUDO tar -xz -C /usr/local/bin/ kubectx" && \
+           run "curl -fsSL \"${BASE}/kubens_v${KUBECTX_VER}_linux_x86_64.tar.gz\" | $SUDO tar -xz -C /usr/local/bin/ kubens"; then
             success "kubectx + kubens ${KUBECTX_VER} installed"
             mark_installed "kubectx/kubens"
         else
@@ -670,15 +704,15 @@ if command -v kubectl &>/dev/null; then
         read -rp "$(echo -e "${PINK}  Install kubectl krew (plugin manager)? [y/N]:${R} ")" do_krew
         if [[ "${do_krew,,}" == "y" ]]; then
             info "Installing krew (kubectl plugin manager)..."
-            (set -x; cd "$(mktemp -d)" && OS="$(uname | tr '[:upper:]' '[:lower:]')" && ARCH="$(uname -m)" && ARCH="${ARCH/x86_64/amd64}" && KREW="krew-${OS}_${ARCH}.tar.gz" && curl -fsSL "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}" -o "${KREW}" && tar zxvf "${KREW}" && ./*-*/install.sh) &>/dev/null || true
+            run "(set -x; cd \"$(mktemp -d)\" && OS=\"$(uname | tr '[:upper:]' '[:lower:]')\" && ARCH=\"$(uname -m)\" && ARCH=\"${ARCH/x86_64/amd64}\" && KREW=\"krew-${OS}_${ARCH}.tar.gz\" && curl -fsSL \"https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}\" -o \"${KREW}\" && tar zxvf \"${KREW}\" && ./*-*/install.sh) || true"
             # Ensure krew bin is on PATH for this script
             export PATH="${HOME}/.krew/bin:$PATH"
-            if command -v kubectl-krew &>/dev/null || command -v kubectl &>/dev/null && kubectl krew &>/dev/null; then
+            if command -v kubectl-krew &>/dev/null || (command -v kubectl &>/dev/null && run "kubectl krew >/dev/null"); then
                 success "krew installed"
                 mark_installed "krew"
                 # Install kc plugin if available
-                if kubectl krew search kc &>/dev/null; then
-                    if kubectl krew install kc &>/dev/null; then
+                if run "kubectl krew search kc >/dev/null"; then
+                    if run "kubectl krew install kc >/dev/null"; then
                         success "krew plugin 'kc' installed"
                         mark_installed "krew-plugin-kc"
                     else
@@ -697,8 +731,8 @@ if command -v kubectl &>/dev/null; then
                     if [[ "${do_krew_plugins,,}" == "y" ]]; then
                         PLUGINS=(ctx ns konfig view-secret who-can)
                         for p in "${PLUGINS[@]}"; do
-                            if kubectl krew search "$p" &>/dev/null; then
-                                if kubectl krew install "$p" &>/dev/null; then
+                            if run "kubectl krew search \"$p\" >/dev/null"; then
+                                if run "kubectl krew install \"$p\" >/dev/null"; then
                                     success "krew plugin '${p}' installed"
                                     mark_installed "krew-plugin-${p}"
                                 else
@@ -733,8 +767,8 @@ else
     echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
 https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
         | $SUDO tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
-    $SUDO apt-get update -qq
-    if $SUDO apt-get install -y -qq terraform &>/dev/null; then
+    $SUDO apt-get update $APT_QUIET
+    if $SUDO apt-get install -y $APT_QUIET terraform; then
         success "terraform installed"
         mark_installed "terraform"
     else
@@ -747,8 +781,8 @@ fi
 if check_tool "ansible"; then :
 else
     info "Installing ansible..."
-    $SUDO apt-get install -y -qq software-properties-common &>/dev/null
-    if $SUDO apt-get install -y -qq ansible &>/dev/null; then
+    $SUDO apt-get install -y $APT_QUIET software-properties-common
+    if $SUDO apt-get install -y $APT_QUIET ansible; then
         success "ansible installed"
         mark_installed "ansible"
     else
@@ -773,7 +807,7 @@ else
         curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
             -o /tmp/awscliv2.zip 2>/dev/null
         unzip -q /tmp/awscliv2.zip -d /tmp/
-        if $SUDO /tmp/aws/install &>/dev/null; then
+        if run "$SUDO /tmp/aws/install"; then
             success "AWS CLI v2 installed"
             mark_installed "aws-cli"
         else
@@ -816,7 +850,7 @@ else
     read -rp "$(echo -e "${PINK}  Install Starship prompt? [y/N]:${R} ")" install_starship
     if [[ "${install_starship,,}" == "y" ]]; then
         info "Installing starship..."
-        if curl -fsSL https://starship.rs/install.sh | sh -s -- --yes &>/dev/null; then
+        if run "curl -fsSL https://starship.rs/install.sh | sh -s -- --yes"; then
             success "starship installed"
             mark_installed "starship"
             echo ""
@@ -858,8 +892,8 @@ else
         mkdir -p "$HOME/.local/share/fonts"
         TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
         if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
-            if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
-                fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+            if run "unzip -o \"$TEMP_ZIP\" -d \"$HOME/.local/share/fonts\""; then
+                run "fc-cache -fv \"$HOME/.local/share/fonts\" || true"
                 success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
                 mark_installed "JetBrainsMono Nerd Font"
             else
@@ -896,8 +930,8 @@ if command -v fc-list &>/dev/null; then
                 mkdir -p "$HOME/.local/share/fonts"
                 TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
                 if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
-                    if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
-                        fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+                    if run "unzip -o \"$TEMP_ZIP\" -d \"$HOME/.local/share/fonts\""; then
+                        run "fc-cache -fv \"$HOME/.local/share/fonts\" || true"
                         success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
                         mark_installed "JetBrainsMono Nerd Font"
                         # show icon test
@@ -928,8 +962,8 @@ else
                 mkdir -p "$HOME/.local/share/fonts"
                 TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
                 if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
-                    if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
-                        fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+                    if run "unzip -o \"$TEMP_ZIP\" -d \"$HOME/.local/share/fonts\""; then
+                        run "fc-cache -fv \"$HOME/.local/share/fonts\" || true"
                         success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
                         mark_installed "JetBrainsMono Nerd Font"
                         echo -e "\nIcon test: ⚡        🐚\n"
@@ -993,7 +1027,7 @@ else
             try "thefuck" pipx install thefuck
             # Ensure setuptools (which provides distutils backports) is available in the pipx venv
             info "Ensuring setuptools is available inside the thefuck pipx venv..."
-            pipx inject thefuck setuptools &>/dev/null || true
+            run "pipx inject thefuck setuptools || true"
             # Some versions of Python remove 'imp'; add a small compatibility shim
             for base in "$HOME/.local/share/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs" "$HOME/.local/pipx/venvs"; do
                 venv_dir="$base/thefuck"
@@ -1027,13 +1061,13 @@ IMP_SHIM
             done
         else
         info "pipx not found — attempting to install pipx via apt"
-        if $SUDO apt-get install -y -qq pipx python3-venv &>/dev/null; then
+        if run "$SUDO apt-get install -y $APT_QUIET pipx python3-venv"; then
             success "pipx installed"
             if command -v pipx &>/dev/null; then
                 try "thefuck" pipx install thefuck
             else
                 warn "pipx still not on PATH — will try pip3 --user"
-                if python3 -m pip install --user thefuck &>/dev/null; then
+                if run "python3 -m pip install --user thefuck"; then
                     success "thefuck installed via pip3 --user"
                     mark_installed "thefuck"
                     echo -e "${YELLOW}  ⚠  Ensure ~/.local/bin is on your PATH to run 'thefuck'${R}"
@@ -1100,10 +1134,10 @@ else
     read -rp "$(echo -e "${PINK}  Install pyenv (Python version manager)? [y/N]:${R} ")" do_pyenv
     if [[ "${do_pyenv,,}" == "y" ]]; then
         info "Installing pyenv..."
-        if git clone --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv" &>/dev/null; then
+        if run "git clone --depth 1 https://github.com/pyenv/pyenv.git \"$HOME/.pyenv\""; then
             success "pyenv installed to $HOME/.pyenv"
             mark_installed "pyenv"
-            echo -e "${GREY}  → Add to ~/.bashrc: export PYENV_ROOT=\"\$HOME/.pyenv\"; export PATH=\"\$PYENV_ROOT/bin:\$PATH\"; eval \"\$(pyenv init --path)\"${R}"
+            echo -e "${GREY}  → Add to ~/.bashrc: export PYENV_ROOT=\"\$HOME/.pyenv\"; export PATH=\"\$PYENV_ROOT/bin:\\$PATH\"; eval \"\$(pyenv init --path)\"${R}"
         else
             warn "pyenv clone failed"
             mark_failed "pyenv"
@@ -1385,7 +1419,7 @@ if check_tool "vlc" "vlc"; then
 else
     read -rp "$(echo -e "${PINK}  Install VLC media player? [y/N]:${R} ")" do_vlc
     if [[ "${do_vlc,,}" == "y" ]]; then
-        if $SUDO apt-get install -y -qq vlc &>/dev/null; then
+        if run "$SUDO apt-get install -y $APT_QUIET vlc"; then
             success "VLC installed"
             mark_installed "vlc"
         elif command -v snap &>/dev/null; then

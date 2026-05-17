@@ -181,13 +181,36 @@ fi
 # ╔══════════════════════════════════════════════════════════════╗
 # ║  MODERN TOOL ALIASES (eza, bat, btop)                        ║
 # ╚══════════════════════════════════════════════════════════════╝
+
+# Detect whether a Nerd Font is installed (used for icons). If not,
+# fall back to non-icon aliases for a clean terminal appearance.
+USE_ICONS=0
+if command -v fc-list &>/dev/null; then
+    if fc-list | grep -i 'nerd' &>/dev/null || fc-list | grep -i 'jetbrains' &>/dev/null; then
+        USE_ICONS=1
+    fi
+else
+    if [[ -d "$HOME/.local/share/fonts" ]] && ls "$HOME/.local/share/fonts" | grep -i 'nerd' &>/dev/null; then
+        USE_ICONS=1
+    fi
+fi
+
 if command -v eza &>/dev/null; then
-    alias ls='eza --icons --group-directories-first'
-    alias ll='eza -lah --icons --group-directories-first --git'
-    alias la='eza -a --icons'
-    alias lt='eza -T --icons --git-ignore'      # tree
-    alias llt='eza -lT --icons --git-ignore'    # detailed tree
-    alias l='eza -1 --icons'
+    if [[ $USE_ICONS -eq 1 ]]; then
+        alias ls='eza --icons --group-directories-first'
+        alias ll='eza -lah --icons --group-directories-first --git'
+        alias la='eza -a --icons'
+        alias lt='eza -T --icons --git-ignore'      # tree
+        alias llt='eza -lT --icons --git-ignore'    # detailed tree
+        alias l='eza -1 --icons'
+    else
+        alias ls='eza --group-directories-first'
+        alias ll='eza -lah --group-directories-first --git'
+        alias la='eza -a'
+        alias lt='eza -T --git-ignore'      # tree
+        alias llt='eza -lT --git-ignore'    # detailed tree
+        alias l='eza -1'
+    fi
 else
     alias ls='ls --color=auto'
     alias ll='ls -alF'

@@ -123,30 +123,8 @@ read -rp "$(echo -e "${PINK}  Continue? [Y/n]:${R} ")" confirm
 [[ "${confirm,,}" =~ ^(n|no)$ ]] && echo "Aborted." && exit 0
 echo ""
 
-# ── 0. BASHRC COPY ───────────────────────────────────────────────
-section "Applying .bashrc"
-
-
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-BASHRC_SRC="${SCRIPT_DIR}/bashrc"
-
-if [[ -f "$BASHRC_SRC" ]]; then
-    BACKUP_PATH="${HOME}/.bashrc.backup.$(date +%Y%m%d_%H%M%S)"
-    if [[ -f "$HOME/.bashrc" ]]; then
-        cp "$HOME/.bashrc" "$BACKUP_PATH"
-        success "Original ~/.bashrc backed up  →  ${BACKUP_PATH}"
-    else
-        warn "No existing ~/.bashrc found — nothing to back up"
-    fi
-    cp "$BASHRC_SRC" "$HOME/.bashrc"
-    success "New ~/.bashrc installed from ${BASHRC_SRC}"
-    mark_installed "bashrc"
-else
-    warn "bashrc not found at ${BASHRC_SRC}"
-    warn "Make sure bashrc sits in the same folder as this script"
-    warn "Continuing with tool installation anyway..."
-fi
-echo ""
+# Note: .bashrc will be installed at the end of the script to avoid
+# triggering interactive config during package installation.
 
 # ── 1. APT BOOTSTRAP ─────────────────────────────────────────────
 section "APT Bootstrap"
@@ -572,6 +550,103 @@ else
 fi
 
 
+# ── 8b. NERD FONTS (optional) ───────────────────────────────────
+echo ""
+read -rp "$(echo -e "${PINK}  Install JetBrainsMono Nerd Font? [y/N]:${R} ")" install_fonts
+if [[ "${install_fonts,,}" == "y" ]]; then
+    info "Installing JetBrainsMono Nerd Font to ~/.local/share/fonts..."
+    mkdir -p "$HOME/.local/share/fonts"
+    TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
+    if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
+        if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
+            fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+            success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
+            mark_installed "JetBrainsMono Nerd Font"
+        else
+            warn "Failed to unzip Nerd Font archive"
+            mark_failed "JetBrainsMono Nerd Font"
+        fi
+        rm -f "$TEMP_ZIP"
+    else
+        warn "Failed to download Nerd Font (network or GitHub blocked)"
+        mark_failed "JetBrainsMono Nerd Font"
+    fi
+else
+    echo -e "${GREY}  ↷  Nerd Font — skipped by user${R}"
+fi
+
+# Check whether Nerd Font installed so we can tell user about icons
+if command -v fc-list &>/dev/null; then
+    if fc-list | grep -i 'nerd' &>/dev/null || fc-list | grep -i 'jetbrains' &>/dev/null; then
+        if command -v eza &>/dev/null; then
+            success "Nerd font detected — eza icons should display correctly"
+        else
+            success "Nerd font detected"
+        fi
+        mark_installed "nerd-font-detected"
+    else
+        warn "No Nerd font detected — icons may not display in your terminal"
+        echo -e "  → To enable icons, re-run this installer and choose to install the Nerd Font,\n    or install a Nerd/Patched font manually (see README.md for instructions)."
+        # If we have a TTY, offer to install now
+        if [[ -t 0 ]]; then
+            read -rp "Install JetBrainsMono Nerd Font now? [y/N]: " resp
+            if [[ "${resp,,}" == "y" ]]; then
+                info "Installing JetBrainsMono Nerd Font to ~/.local/share/fonts..."
+                mkdir -p "$HOME/.local/share/fonts"
+                TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
+                if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
+                    if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
+                        fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+                        success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
+                        mark_installed "JetBrainsMono Nerd Font"
+                        # show icon test
+                        echo -e "\nIcon test: ⚡        🐚\n"
+                    else
+                        warn "Failed to unzip Nerd Font archive"
+                        mark_failed "JetBrainsMono Nerd Font"
+                    fi
+                    rm -f "$TEMP_ZIP"
+                else
+                    warn "Failed to download Nerd Font (network or GitHub blocked)"
+                    mark_failed "JetBrainsMono Nerd Font"
+                fi
+            fi
+        fi
+    fi
+else
+    # fc-list not available; check local fonts folder as fallback
+    if [[ -d "$HOME/.local/share/fonts" ]] && ls "$HOME/.local/share/fonts" | grep -i 'nerd' &>/dev/null; then
+        success "Nerd font files found in ~/.local/share/fonts — icons should display if your terminal uses that font"
+        mark_installed "nerd-font-detected"
+    else
+        warn "Could not detect fontconfig (fc-list) — cannot auto-detect Nerd fonts"
+        echo -e "  → If icons don't show, install a Nerd Font and set it as your terminal font (see README.md)."
+        if [[ -t 0 ]]; then
+            read -rp "Attempt to install JetBrainsMono Nerd Font now? [y/N]: " resp2
+            if [[ "${resp2,,}" == "y" ]]; then
+                mkdir -p "$HOME/.local/share/fonts"
+                TEMP_ZIP="/tmp/JetBrainsMonoNerd.zip"
+                if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip" -o "$TEMP_ZIP"; then
+                    if unzip -o "$TEMP_ZIP" -d "$HOME/.local/share/fonts" &>/dev/null; then
+                        fc-cache -fv "$HOME/.local/share/fonts" &>/dev/null || true
+                        success "JetBrainsMono Nerd Font installed to $HOME/.local/share/fonts"
+                        mark_installed "JetBrainsMono Nerd Font"
+                        echo -e "\nIcon test: ⚡        🐚\n"
+                    else
+                        warn "Failed to unzip Nerd Font archive"
+                        mark_failed "JetBrainsMono Nerd Font"
+                    fi
+                    rm -f "$TEMP_ZIP"
+                else
+                    warn "Failed to download Nerd Font (network or GitHub blocked)"
+                    mark_failed "JetBrainsMono Nerd Font"
+                fi
+            fi
+        fi
+    fi
+fi
+
+
 # ── 9. SUMMARY ───────────────────────────────────────────────────
 echo ""
 echo -e "${NEON}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
@@ -613,3 +688,27 @@ fi
 echo ""
 echo -e "${NEON}  Happy hacking! ⚡${R}"
 echo ""
+
+# ── Install .bashrc (deferred) ───────────────────────────────────
+section "Applying .bashrc"
+
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+BASHRC_SRC="${SCRIPT_DIR}/bashrc"
+
+if [[ -f "$BASHRC_SRC" ]]; then
+    BACKUP_PATH="${HOME}/.bashrc.backup.$(date +%Y%m%d_%H%M%S)"
+    if [[ -f "$HOME/.bashrc" ]]; then
+        cp "$HOME/.bashrc" "$BACKUP_PATH" 2>/dev/null || true
+        success "Original ~/.bashrc backed up  →  ${BACKUP_PATH}"
+    else
+        warn "No existing ~/.bashrc found — nothing to back up"
+    fi
+    cp "$BASHRC_SRC" "$HOME/.bashrc"
+    success "New ~/.bashrc installed from ${BASHRC_SRC}"
+    mark_installed "bashrc"
+else
+    warn "bashrc not found at ${BASHRC_SRC}"
+    warn "Make sure bashrc sits in the same folder as this script"
+    warn "Installation complete — but ~/.bashrc was not updated" 
+fi
+

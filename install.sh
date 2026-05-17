@@ -195,9 +195,10 @@ EOF
 echo -e "${R}"
 
 echo -e "${GREY}  This script will install:${R}"
-echo -e "${GREY}  Terminal  → vim, fzf, eza, bat, btop, zoxide, tmux${R}"
-echo -e "${GREY}  DevOps    → docker, kubectl, helm, terraform, ansible${R}"
-echo -e "${GREY}  Dev       → git extras, jq, yq, httpie, lazygit${R}"
+echo -e "${GREY}  Terminal  → vim, fzf, eza, bat, btop, zoxide, tmux, ripgrep, fd, delta, ncdu, tldr${R}"
+echo -e "${GREY}  Dev       → git extras, jq, yq, httpie, lazygit, gh, direnv, asdf${R}"
+echo -e "${GREY}  DevOps    → docker, podman, lazydocker, kubectl, helm, k9s, kubectx/kubens, krew, kind, terraform, ansible${R}"
+echo -e "${GREY}  GUI/Extras→ VSCode, Google Chrome, Postman, VLC, Homebrew (optional)${R}"
 echo -e "${GREY}  Cloud     → aws-cli, gcloud (optional)${R}"
 echo ""
 read -rp "$(echo -e "${PINK}  Continue? [Y/n]:${R} ")" confirm

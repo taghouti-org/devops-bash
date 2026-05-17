@@ -42,9 +42,29 @@ Format: **Tool** — short description
 
 - **lazygit** — TUI for git. Run: `lazygit`.
 
+- **gh** — GitHub CLI. Create PRs, issues and interact with GitHub from the terminal. Usage: `gh pr create`, `gh issue list`.
+- **direnv** — Per-project environment loader. Add `eval "$(direnv hook bash)"` to your shell and use `.envrc` files per project.
+- **asdf** — Universal version manager for node/ruby/python/go/etc. Usage: `asdf plugin-add nodejs && asdf install nodejs lts`.
+- **tldr** — Concise community examples for CLI commands. Usage: `tldr tar`.
+- **podman** — Daemonless container engine; rootless-friendly alternative to Docker. Usage: `podman ps`, `podman run --rm -it alpine sh`.
+- **kind** — Run local Kubernetes clusters in Docker for development/testing. Usage: `kind create cluster`.
+- **krew** — `kubectl` plugin manager. After installing `krew`, install plugins like `kubectl krew install ctx`.
+
+- **Postman** — GUI API client. The installer can optionally install Postman via `snap` or tarball. Launch via application menu or `postman` binary if installed.
+- **VLC** — Media player available via apt or snap. Launch via `vlc`.
+
 - **starship** — optional prompt engine. If you install and enable it, replace the prompt block in `~/.bashrc` with `eval "$(starship init bash)"`.
 
 - **neofetch** — simple system info banner shown on shell startup if present. `bashrc` runs `neofetch` automatically (with a blank margin line). Usage: `neofetch`.
+
+Krew plugin recommendations
+- `ctx` — quick context switching helper (similar to `kubectx`).
+- `ns` — namespace switching helper (similar to `kubens`).
+- `konfig` — view and manage k8s config.
+- `view-secret` — safely view secrets in different formats.
+- `who-can` — RBAC utility to check who can perform actions.
+
+If you'd like, I can expand any of these entries with example commands and common flags.
 
 Tips
 - Many of the modern tools (`eza`, `bat`, `fd`, `ripgrep`) are used as drop-in replacements via aliases in `bashrc` — you can revert to system defaults by removing or commenting aliases in `~/.bashrc.local`.

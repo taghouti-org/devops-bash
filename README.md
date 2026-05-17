@@ -36,6 +36,15 @@ The installer prompts for optional steps like AWS CLI and Starship.
 - DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `terraform`, `ansible`
 - Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner)
 
+### New additions and notes
+- Optional GUI / desktop apps: `Postman`, `VLC`, `VSCode`, `Google Chrome` (installed only if requested).
+- Developer utilities: `gh` (GitHub CLI), `direnv`, `asdf`, `tldr`, `kind`, `podman`, and `krew` (kubectl plugin manager).
+- The installer includes an optional `krew` flow and can install recommended krew plugins (`ctx`, `ns`, `konfig`, `view-secret`, `who-can`, `kc`).
+- The installer avoids launching GUI applications when probing for installed tools (so `postman --version` will not be executed).
+- Non-interactive flags:
+	- `-y` / `--yes` — assume yes for prompts.
+	- `--cleanup` — automatically remove installer backups/logs at end.
+
 ## Welcome banner
 
 This setup uses `neofetch` to show a welcome banner (if installed). The `install.sh` will install `neofetch` and `bashrc` will call it on interactive shell startup if present.

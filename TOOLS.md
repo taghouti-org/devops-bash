@@ -1,6 +1,9 @@
+
 # Tools in this Bash Configuration
 
 This document lists the tools referenced or encouraged by `bashrc`, with short usage notes and examples so you can get productive quickly.
+
+For expanded scenarios, testing steps, and quick verification commands see `GUIDE.md`.
 
 Format: **Tool** — short description
 

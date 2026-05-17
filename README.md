@@ -36,6 +36,10 @@ The installer prompts for optional steps like AWS CLI and Starship.
 - DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `krew`, `kind`, `podman`, `terraform`, `ansible`
 - Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc)
 
+## Usage Guide
+
+See `GUIDE.md` for per-tool usage scenarios, quick tests, and examples to validate installations and try common workflows.
+
 ### New additions and notes
 - Optional GUI / desktop apps: `Postman`, `VLC`, `VSCode`, `Google Chrome` (installed only if requested).
 - Developer utilities: `gh` (GitHub CLI), `direnv`, `asdf`, `tldr`, `kind`, `podman`, and `krew` (kubectl plugin manager).

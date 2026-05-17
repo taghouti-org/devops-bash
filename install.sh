@@ -8,6 +8,9 @@ set -euo pipefail
 # ── Colors ────────────────────────────────────────────────────────
 R='\033[0m'
 BOLD='\033[1m'
+if [[ -t 0 ]]; then
+    echo ""
+fi
 GREEN='\033[0;32m'
 BGREEN='\033[1;32m'
 CYAN='\033[0;36m'
@@ -48,6 +51,22 @@ try() {
 
 # Check if a binary exists
 has() { command -v "$1" &>/dev/null; }
+
+# CLI options
+ASSUME_YES=0
+CLEANUP_AUTO=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -y|--yes)
+            ASSUME_YES=1; shift ;;
+        --cleanup|--remove-backups)
+            CLEANUP_AUTO=1; shift ;;
+        --)
+            shift; break ;;
+        *)
+            break ;;
+    esac
+done
 
 # check_tool NAME [BINARY]
 #   If the tool is found: print path + version, mark skipped, return 0 (→ skip install)
@@ -195,7 +214,6 @@ $SUDO apt-get install -y -qq \
     build-essential \
     2>/dev/null
 success "Prerequisites ready"
-
 
 # ── 2. TERMINAL TOOLS ────────────────────────────────────────────
 section "Terminal Tools"
@@ -931,6 +949,37 @@ if [[ ${#FAILED[@]} -eq 0 && -t 0 ]]; then
             if [[ "${start_shell,,}" == "y" ]]; then
                 exec "$SHELL" -l
             fi
+        fi
+    fi
+fi
+
+# Cleanup: remove backups / installer logs
+remove_list=()
+for f in "$HOME"/.bashrc.backup.* "$HOME"/.bashrc.preinstall.* "$SCRIPT_DIR"/tmux-client-*.log; do
+    [[ -e "$f" ]] || continue
+    remove_list+=("$f")
+done
+
+if [[ ${#remove_list[@]} -gt 0 ]]; then
+    if [[ "$CLEANUP_AUTO" -eq 1 || "$ASSUME_YES" -eq 1 || ! -t 0 ]]; then
+        for f in "${remove_list[@]}"; do
+            rm -f "$f" 2>/dev/null || true
+            success "Removed ${f}"
+        done
+    elif [[ -t 0 ]]; then
+        echo ""
+        echo -e "${GREY}Backup / installer log files found:${R}"
+        for f in "${remove_list[@]}"; do
+            echo -e "  - ${f}"
+        done
+        read -rp "$(echo -e "${PINK}  Remove these files now? [y/N]:${R} ")" do_rm
+        if [[ "${do_rm,,}" == "y" ]]; then
+            for f in "${remove_list[@]}"; do
+                rm -f "$f" 2>/dev/null || true
+                success "Removed ${f}"
+            done
+        else
+            echo -e "${GREY}  → Backups preserved.${R}"
         fi
     fi
 fi

@@ -356,11 +356,31 @@ else
     try "jq" $SUDO apt-get install -y -qq jq
 fi
 
-# yq (YAML processor)
-if check_tool "yq"; then :
+# yq (YAML processor) — prefer mikefarah's v4 binary (modern features)
+if command -v yq &>/dev/null; then
+    # If current yq is mikefarah's v4, skip. Otherwise attempt to install modern yq.
+    if yq --version 2>/dev/null | grep -qi 'mikefarah'; then
+        echo -e "${GREY}  ↷  ${BOLD}yq${R}${GREY} already installed (mikefarah) — skipping${R}"
+        mark_skipped "yq"
+    else
+        warn "Detected non-mikefarah 'yq' — installing mikefarah yq v4 to /usr/local/bin"
+        if $SUDO curl -fsSL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq && $SUDO chmod +x /usr/local/bin/yq; then
+            success "yq (mikefarah) installed to /usr/local/bin"
+            mark_installed "yq-mikefarah"
+        else
+            warn "Failed to download mikefarah yq — falling back to distro package"
+            try "yq" $SUDO apt-get install -y -qq yq
+        fi
+    fi
 else
-    info "Installing yq..."
-    try "yq" $SUDO apt-get install -y -qq yq
+    info "Installing mikefarah yq (preferred) to /usr/local/bin..."
+    if curl -fsSL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /tmp/yq_tmp && chmod +x /tmp/yq_tmp && $SUDO mv /tmp/yq_tmp /usr/local/bin/yq && $SUDO chmod +x /usr/local/bin/yq; then
+        success "yq (mikefarah) installed to /usr/local/bin"
+        mark_installed "yq-mikefarah"
+    else
+        warn "Failed to fetch mikefarah yq — trying distro package via apt"
+        try "yq" $SUDO apt-get install -y -qq yq
+    fi
 fi
 
 # httpie (friendly HTTP client)
@@ -379,9 +399,13 @@ fi
 
 # Python extras
 info "Installing Python extras (pip, venv, dev headers)..."
-$SUDO apt-get install -y -qq python3-pip python3-venv python3-dev python3-distutils &>/dev/null
-success "Python3 extras ready"
-mark_installed "python3-venv"
+if $SUDO apt-get install -y -qq python3-pip python3-venv python3-dev python3-distutils &>/dev/null; then
+    success "Python3 extras ready"
+    mark_installed "python3-venv"
+else
+    warn "Python3 extras install FAILED — continuing with remaining steps"
+    mark_failed "python3-venv"
+fi
 
 # Node version manager (nvm) — installs to ~/.nvm
 if [[ -d "$HOME/.nvm" ]]; then

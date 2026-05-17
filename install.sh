@@ -924,6 +924,25 @@ else
 fi
 
 
+# Deduplicate arrays in-place (preserve order) to avoid duplicate entries
+uniq_inplace() {
+    local -n arr=$1
+    local tmp=()
+    declare -A seen=()
+    for v in "${arr[@]:-}"; do
+        if [[ -z "${seen[$v]:-}" ]]; then
+            tmp+=("$v")
+            seen[$v]=1
+        fi
+    done
+    arr=("${tmp[@]}")
+}
+
+# Ensure summary lists contain unique entries
+uniq_inplace INSTALLED
+uniq_inplace SKIPPED
+uniq_inplace FAILED
+
 # ── 9. SUMMARY ───────────────────────────────────────────────────
 # ── 9. ADDITIONAL TOOLS (suggested) ─────────────────────────────
 section "Additional Tools"

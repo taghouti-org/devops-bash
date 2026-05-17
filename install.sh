@@ -759,6 +759,132 @@ echo ""
 echo -e "${NEON}  Happy hacking! ⚡${R}"
 echo ""
 
+# ── OPTIONAL EXTRAS (GUI & misc) ─────────────────────────────────
+section "Optional Extras (GUI & misc)"
+
+echo ""
+# VSCode
+if check_tool "vscode" "code"; then
+    echo -e "${GREY}  ↷  VSCode — already installed${R}"
+    mark_skipped "vscode"
+else
+    read -rp "$(echo -e "${PINK}  Install Visual Studio Code (snap)? [y/N]:${R} ")" do_vscode
+    if [[ "${do_vscode,,}" == "y" ]]; then
+        if command -v snap &>/dev/null; then
+            try "vscode" $SUDO snap install --classic code
+        else
+            info "Installing VSCode via Microsoft APT repo..."
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | $SUDO gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg 2>/dev/null || true
+            echo "deb [arch=amd64] https://packages.microsoft.com/repos/code stable main" | $SUDO tee /etc/apt/sources.list.d/vscode.list > /dev/null
+            $SUDO apt-get update -qq
+            try "vscode" $SUDO apt-get install -y -qq code
+        fi
+    fi
+fi
+
+# Google Chrome
+if check_tool "google-chrome" "google-chrome"; then
+    echo -e "${GREY}  ↷  Google Chrome — already installed${R}"
+    mark_skipped "google-chrome"
+else
+    read -rp "$(echo -e "${PINK}  Install Google Chrome? [y/N]:${R} ")" do_chrome
+    if [[ "${do_chrome,,}" == "y" ]]; then
+        TEMP_DEB="/tmp/google-chrome-stable_current_amd64.deb"
+        curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o "$TEMP_DEB" 2>/dev/null || true
+        if [[ -f "$TEMP_DEB" ]]; then
+            try "google-chrome" $SUDO apt-get install -y -qq "$TEMP_DEB"
+            rm -f "$TEMP_DEB"
+        else
+            warn "Failed to download Google Chrome package"
+            mark_failed "google-chrome"
+        fi
+    fi
+fi
+
+# Lens (Kubernetes IDE)
+LENS_FOUND=0
+if command -v lens &>/dev/null; then
+    LENS_FOUND=1
+elif command -v kontena-lens &>/dev/null; then
+    LENS_FOUND=1
+elif [[ -x "/snap/bin/kontena-lens" || -x "/snap/bin/lens" ]]; then
+    LENS_FOUND=1
+elif command -v snap &>/dev/null && snap list kontena-lens &>/dev/null; then
+    LENS_FOUND=1
+fi
+
+if [[ ${LENS_FOUND} -eq 1 ]]; then
+    echo -e "${GREY}  ↷  Lens — already installed${R}"
+    mark_skipped "lens"
+else
+    read -rp "$(echo -e "${PINK}  Install Lens (snap)? [y/N]:${R} ")" do_lens
+    if [[ "${do_lens,,}" == "y" ]]; then
+        if command -v snap &>/dev/null; then
+            try "lens" $SUDO snap install kontena-lens --classic
+        else
+            warn "Snap not available — please install Lens manually from https://k8slens.dev/"
+            mark_failed "lens"
+        fi
+    fi
+fi
+
+# Homebrew (Linuxbrew)
+BREW_FOUND=0
+if command -v brew &>/dev/null; then
+    BREW_FOUND=1
+elif [[ -x "$HOME/.linuxbrew/bin/brew" || -x "/home/linuxbrew/.linuxbrew/bin/brew" || -x "/home/$USER/.linuxbrew/bin/brew" ]]; then
+    BREW_FOUND=1
+fi
+
+if [[ ${BREW_FOUND} -eq 1 ]]; then
+    echo -e "${GREY}  ↷  Homebrew — already installed${R}"
+    mark_skipped "homebrew"
+else
+    read -rp "$(echo -e "${PINK}  Install Homebrew (Linux)? [y/N]:${R} ")" do_brew
+    if [[ "${do_brew,,}" == "y" ]]; then
+        if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &>/dev/null; then
+            success "Homebrew installed"
+            mark_installed "homebrew"
+        else
+            warn "Homebrew install failed"
+            mark_failed "homebrew"
+        fi
+    fi
+fi
+
+# Antigravity (placeholder)
+if check_tool "antigravity" "antigravity"; then
+    echo -e "${GREY}  ↷  antigravity — already installed${R}"
+    mark_skipped "antigravity"
+else
+    read -rp "$(echo -e "${PINK}  Show antigravity install instructions? [y/N]:${R} ")" do_anti
+    if [[ "${do_anti,,}" == "y" ]]; then
+        echo -e "Visit https://example.com/antigravity-install for manual install instructions (placeholder)"
+    fi
+fi
+
+# k9s (optional)
+if check_tool "k9s" "k9s"; then
+    echo -e "${GREY}  ↷  k9s — already installed${R}"
+    mark_skipped "k9s"
+else
+    read -rp "$(echo -e "${PINK}  Install k9s? [y/N]:${R} ")" do_k9s
+    if [[ "${do_k9s,,}" == "y" ]]; then
+        K9S_VERSION=$(curl -fsSL https://api.github.com/repos/derailed/k9s/releases/latest 2>/dev/null | grep tag_name | cut -d'"' -f4) || K9S_VERSION="v0.32.4"
+        K9S_URL="https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz"
+        if curl -fsSL "$K9S_URL" -o /tmp/k9s.tar.gz 2>/dev/null; then
+            tar -xzf /tmp/k9s.tar.gz -C /tmp/ k9s 2>/dev/null
+            $SUDO mv /tmp/k9s /usr/local/bin/k9s
+            success "k9s ${K9S_VERSION} installed"
+            mark_installed "k9s"
+            rm -f /tmp/k9s.tar.gz
+        else
+            warn "k9s download failed (GitHub may be blocked)"
+            mark_failed "k9s"
+        fi
+    fi
+fi
+
 # ── Install .bashrc (deferred) ───────────────────────────────────
 section "Applying .bashrc"
 

@@ -52,6 +52,142 @@ try() {
 # Check if a binary exists
 has() { command -v "$1" &>/dev/null; }
 
+
+# ── 9. ADDITIONAL TOOLS (suggested) ─────────────────────────────
+section "Additional Tools"
+
+# autojump (fast directory jumping)
+if check_tool "autojump" "autojump"; then :
+else
+    info "Installing autojump..."
+    try "autojump" $SUDO apt-get install -y -qq autojump
+fi
+
+# thefuck (shell command suggestions)
+if check_tool "thefuck" "thefuck"; then :
+else
+    info "Installing thefuck..."
+    try "thefuck" $SUDO apt-get install -y -qq thefuck
+fi
+
+# entr (run arbitrary commands when files change)
+if check_tool "entr" "entr"; then :
+else
+    info "Installing entr..."
+    try "entr" $SUDO apt-get install -y -qq entr
+fi
+
+# skim (sk) — fuzzy filter alternative to fzf
+if check_tool "sk" "sk" "skim"; then :
+else
+    info "Installing skim (sk)..."
+    try "sk" $SUDO apt-get install -y -qq skim
+fi
+
+# tig (ncurses git interface)
+if check_tool "tig" "tig"; then :
+else
+    info "Installing tig..."
+    try "tig" $SUDO apt-get install -y -qq tig
+fi
+
+# git-crypt (transparent file encryption for git)
+if check_tool "git-crypt" "git-crypt"; then :
+else
+    info "Installing git-crypt..."
+    try "git-crypt" $SUDO apt-get install -y -qq git-crypt
+fi
+
+# rbenv (Ruby version manager) — optional
+if check_tool "rbenv" "rbenv"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install rbenv (Ruby version manager)? [y/N]:${R} ")" do_rbenv
+    if [[ "${do_rbenv,,}" == "y" ]]; then
+        info "Installing rbenv..."
+        try "rbenv" git clone --depth 1 https://github.com/rbenv/rbenv.git "$HOME/.rbenv"
+        echo -e "${GREY}  → Add to ~/.bashrc: export PATH=\"\$HOME/.rbenv/bin:\$PATH\"; eval \"\$(rbenv init -)\"${R}"
+    fi
+fi
+
+# pyenv (Python version manager)
+if check_tool "pyenv" "pyenv"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install pyenv (Python version manager)? [y/N]:${R} ")" do_pyenv
+    if [[ "${do_pyenv,,}" == "y" ]]; then
+        info "Installing pyenv..."
+        if git clone --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv" &>/dev/null; then
+            success "pyenv installed to $HOME/.pyenv"
+            mark_installed "pyenv"
+            echo -e "${GREY}  → Add to ~/.bashrc: export PYENV_ROOT=\"\$HOME/.pyenv\"; export PATH=\"\$PYENV_ROOT/bin:\$PATH\"; eval \"\$(pyenv init --path)\"${R}"
+        else
+            warn "pyenv clone failed"
+            mark_failed "pyenv"
+        fi
+    fi
+fi
+
+# neovim (modern vim) — skip if user already has nvim
+if check_tool "nvim" "nvim"; then :
+else
+    info "Installing neovim..."
+    try "neovim" $SUDO apt-get install -y -qq neovim
+fi
+
+# micro (simple terminal editor)
+if check_tool "micro" "micro"; then :
+else
+    info "Installing micro editor..."
+    try "micro" $SUDO apt-get install -y -qq micro
+fi
+
+# chromium (browser) — skip if chrome/firefox present
+if check_tool "chromium" "chromium-browser" "chromium"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install Chromium browser? [y/N]:${R} ")" do_chrome
+    if [[ "${do_chrome,,}" == "y" ]]; then
+        info "Installing chromium..."
+        try "chromium" $SUDO apt-get install -y -qq chromium-browser
+    fi
+fi
+
+# keepassxc (password manager)
+if check_tool "keepassxc" "keepassxc"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install keepassxc (password manager)? [y/N]:${R} ")" do_keepass
+    if [[ "${do_keepass,,}" == "y" ]]; then
+        info "Installing keepassxc..."
+        try "keepassxc" $SUDO apt-get install -y -qq keepassxc
+    fi
+fi
+
+# hadolint (Dockerfile linter)
+if check_tool "hadolint" "hadolint"; then :
+else
+    info "Installing hadolint..."
+    try "hadolint" $SUDO apt-get install -y -qq hadolint
+fi
+
+# tfsec (terraform security scanner)
+if check_tool "tfsec" "tfsec"; then :
+else
+    info "Installing tfsec..."
+    try "tfsec" $SUDO apt-get install -y -qq tfsec
+fi
+
+# kubeval (kubernetes manifest validator)
+if check_tool "kubeval" "kubeval"; then :
+else
+    info "Installing kubeval..."
+    try "kubeval" $SUDO apt-get install -y -qq kubeval
+fi
+
+# taskwarrior (task management)
+if check_tool "task" "task"; then :
+else
+    info "Installing taskwarrior..."
+    try "taskwarrior" $SUDO apt-get install -y -qq taskwarrior
+fi
+
 # (No GUI app pre-checks here — avoid launching GUI apps when probing.)
 
 # CLI options

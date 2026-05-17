@@ -52,6 +52,8 @@ try() {
 # Check if a binary exists
 has() { command -v "$1" &>/dev/null; }
 
+# (No GUI app pre-checks here — avoid launching GUI apps when probing.)
+
 # CLI options
 ASSUME_YES=0
 CLEANUP_AUTO=0
@@ -76,6 +78,7 @@ check_tool() {
     local bin="${2:-$1}"   # default binary name == label
     local bin_path ver
 
+    # If caller passed alternate binary names, they will be tried below.
     bin_path=$(command -v "$bin" 2>/dev/null) || {
         # also try common alt names passed as extra args
         shift 2 2>/dev/null || shift 1
@@ -85,11 +88,23 @@ check_tool() {
     }
 
     if [[ -n "$bin_path" ]]; then
-        # Try to get a version string; suppress errors gracefully
-        ver=$( "$bin" --version 2>/dev/null \
-            || "$bin" version 2>/dev/null \
-            || "$bin" -v 2>/dev/null \
-            || echo "" ) 
+        # Avoid executing GUI app binaries when probing for versions (they may launch)
+        NO_VERSION_EXEC=(postman code "google-chrome" chrome firefox vlc)
+        skip_ver=0
+        for p in "${NO_VERSION_EXEC[@]}"; do
+            if [[ "$bin" == "$p" || "$bin_path" == *"/$p" ]]; then
+                skip_ver=1; break
+            fi
+        done
+        if [[ "$skip_ver" -eq 0 ]]; then
+            # Try to get a version string; suppress errors gracefully
+            ver=$( "$bin" --version 2>/dev/null \
+                || "$bin" version 2>/dev/null \
+                || "$bin" -v 2>/dev/null \
+                || echo "" ) 
+        else
+            ver=""
+        fi
         ver=$(echo "$ver" | head -1 | sed 's/^[[:space:]]*//' | cut -c1-60)
         if [[ -n "$ver" ]]; then
             echo -e "${GREY}  ↷  ${BOLD}${label}${R}${GREY} already installed — skipping${R}"
@@ -309,6 +324,14 @@ else
     try "ncdu" $SUDO apt-get install -y -qq ncdu
 fi
 
+# tldr (concise CLI examples)
+if check_tool "tldr"; then :
+else
+    info "Installing tldr..."
+    try "tldr" $SUDO apt-get install -y -qq tldr
+fi
+
+# neofetch (welcome banner)
 # neofetch (welcome banner)
 if check_tool "neofetch"; then :
 else
@@ -374,6 +397,65 @@ else
     fi
 fi
 
+# GitHub CLI (gh)
+if check_tool "gh" "gh"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install GitHub CLI (gh)? [y/N]:${R} ")" do_gh
+    if [[ "${do_gh,,}" == "y" ]]; then
+        info "Installing GitHub CLI..."
+        if $SUDO apt-get install -y -qq gh &>/dev/null; then
+            success "gh installed"
+            mark_installed "gh"
+        else
+            # fallback: GitHub release
+            GH_VER=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest 2>/dev/null | grep tag_name | cut -d'"' -f4) || GH_VER="v2.50.0"
+            GH_URL="https://github.com/cli/cli/releases/download/${GH_VER}/gh_${GH_VER#v}_linux_amd64.tar.gz"
+            if curl -fsSL "$GH_URL" -o /tmp/gh.tar.gz 2>/dev/null; then
+                tar -xzf /tmp/gh.tar.gz -C /tmp/ gh_${GH_VER#v}_linux_amd64/bin/gh 2>/dev/null || true
+                $SUDO mv /tmp/gh_${GH_VER#v}_linux_amd64/bin/gh /usr/local/bin/gh 2>/dev/null || true
+                $SUDO chmod +x /usr/local/bin/gh || true
+                success "gh installed"
+                mark_installed "gh"
+                rm -f /tmp/gh.tar.gz
+            else
+                warn "Failed to install gh"
+                mark_failed "gh"
+            fi
+        fi
+    fi
+fi
+
+# (No Postman shutdown logic — avoid interacting with GUI processes.)
+
+# direnv (per-project env hooks)
+if check_tool "direnv" "direnv"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install direnv (project environment loader)? [y/N]:${R} ")" do_direnv
+    if [[ "${do_direnv,,}" == "y" ]]; then
+        info "Installing direnv..."
+        try "direnv" $SUDO apt-get install -y -qq direnv
+    fi
+fi
+
+# asdf (version manager)
+if [[ -d "$HOME/.asdf" ]]; then
+    echo -e "${GREY}  ↷  asdf — already installed${R}"
+    mark_skipped "asdf"
+else
+    read -rp "$(echo -e "${PINK}  Install asdf (universal version manager)? [y/N]:${R} ")" do_asdf
+    if [[ "${do_asdf,,}" == "y" ]]; then
+        info "Installing asdf..."
+        if git clone --depth 1 https://github.com/asdf-vm/asdf.git "$HOME/.asdf" &>/dev/null; then
+            success "asdf installed to $HOME/.asdf"
+            mark_installed "asdf"
+            echo -e "${GREY}  → Add to ~/.bashrc: source \$HOME/.asdf/asdf.sh${R}"
+        else
+            warn "Failed to clone asdf repository"
+            mark_failed "asdf"
+        fi
+    fi
+fi
+
 
 # ── 4. DOCKER ────────────────────────────────────────────────────
 section "Docker"
@@ -424,6 +506,24 @@ else
     else
         warn "lazydocker download failed (GitHub may be blocked)"
         mark_failed "lazydocker"
+    fi
+fi
+
+# Podman (daemonless containers)
+if check_tool "podman" "podman"; then :
+    echo -e "${GREY}  ↷  podman — already installed${R}"
+    mark_skipped "podman"
+else
+    read -rp "$(echo -e "${PINK}  Install Podman (optional)? [y/N]:${R} ")" do_podman
+    if [[ "${do_podman,,}" == "y" ]]; then
+        info "Installing podman..."
+        if $SUDO apt-get install -y -qq podman &>/dev/null; then
+            success "podman installed"
+            mark_installed "podman"
+        else
+            warn "Podman install failed via apt"
+            mark_failed "podman"
+        fi
     fi
 fi
 
@@ -482,6 +582,26 @@ else
     fi
 fi
 
+# kind (Kubernetes IN Docker) — useful for local clusters
+if check_tool "kind" "kind"; then :
+    echo -e "${GREY}  ↷  kind — already installed${R}"
+    mark_skipped "kind"
+else
+    read -rp "$(echo -e "${PINK}  Install kind (local k8s)? [y/N]:${R} ")" do_kind
+    if [[ "${do_kind,,}" == "y" ]]; then
+        info "Installing kind..."
+        KIND_VER=$(curl -fsSL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest 2>/dev/null | grep tag_name | cut -d'"' -f4) || KIND_VER="v0.20.0"
+        KIND_URL="https://kind.sigs.k8s.io/dl/${KIND_VER}/kind-linux-amd64"
+        if curl -fsSL "$KIND_URL" -o /tmp/kind && $SUDO mv /tmp/kind /usr/local/bin/kind && $SUDO chmod +x /usr/local/bin/kind; then
+            success "kind installed"
+            mark_installed "kind"
+        else
+            warn "Failed to install kind"
+            mark_failed "kind"
+        fi
+    fi
+fi
+
 # kubectx + kubens
 if check_tool "kubectx/kubens" "kubectx"; then :
 else
@@ -502,6 +622,69 @@ else
         else
             warn "kubectx install failed"
             mark_failed "kubectx/kubens"
+        fi
+    fi
+fi
+
+# krew (kubectl plugin manager) + plugins
+if command -v kubectl &>/dev/null; then
+    KREW_INSTALLED=0
+    if command -v kubectl-krew &>/dev/null || [[ -x "$HOME/.krew/bin/kubectl-krew" ]]; then
+        KREW_INSTALLED=1
+    fi
+
+    if [[ ${KREW_INSTALLED} -eq 1 ]]; then
+        echo -e "${GREY}  ↷  krew — already installed${R}"
+        mark_skipped "krew"
+    else
+        read -rp "$(echo -e "${PINK}  Install kubectl krew (plugin manager)? [y/N]:${R} ")" do_krew
+        if [[ "${do_krew,,}" == "y" ]]; then
+            info "Installing krew (kubectl plugin manager)..."
+            (set -x; cd "$(mktemp -d)" && OS="$(uname | tr '[:upper:]' '[:lower:]')" && ARCH="$(uname -m)" && ARCH="${ARCH/x86_64/amd64}" && KREW="krew-${OS}_${ARCH}.tar.gz" && curl -fsSL "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}" -o "${KREW}" && tar zxvf "${KREW}" && ./*-*/install.sh) &>/dev/null || true
+            # Ensure krew bin is on PATH for this script
+            export PATH="${HOME}/.krew/bin:$PATH"
+            if command -v kubectl-krew &>/dev/null || command -v kubectl &>/dev/null && kubectl krew &>/dev/null; then
+                success "krew installed"
+                mark_installed "krew"
+                # Install kc plugin if available
+                if kubectl krew search kc &>/dev/null; then
+                    if kubectl krew install kc &>/dev/null; then
+                        success "krew plugin 'kc' installed"
+                        mark_installed "krew-plugin-kc"
+                    else
+                        warn "Failed to install krew plugin 'kc'"
+                        mark_failed "krew-plugin-kc"
+                    fi
+                else
+                    warn "krew plugin 'kc' not found in index"
+                fi
+
+                # Offer additional recommended plugins
+                if [[ -t 0 ]]; then
+                    echo ""
+                    echo -e "${CYAN}Recommended krew plugins:${R} ctx, ns, konfig, view-secret, who-can"
+                    read -rp "$(echo -e "${PINK}  Install recommended krew plugins now? [y/N]:${R} ")" do_krew_plugins
+                    if [[ "${do_krew_plugins,,}" == "y" ]]; then
+                        PLUGINS=(ctx ns konfig view-secret who-can)
+                        for p in "${PLUGINS[@]}"; do
+                            if kubectl krew search "$p" &>/dev/null; then
+                                if kubectl krew install "$p" &>/dev/null; then
+                                    success "krew plugin '${p}' installed"
+                                    mark_installed "krew-plugin-${p}"
+                                else
+                                    warn "Failed to install krew plugin '${p}'"
+                                    mark_failed "krew-plugin-${p}"
+                                fi
+                            else
+                                warn "krew plugin '${p}' not found"
+                            fi
+                        done
+                    fi
+                fi
+            else
+                warn "krew installation failed or kubectl not available in PATH"
+                mark_failed "krew"
+            fi
         fi
     fi
 fi

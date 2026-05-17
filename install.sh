@@ -436,12 +436,47 @@ fi
 
 # Python extras
 info "Installing Python extras (pip, venv, dev headers)..."
-if $SUDO apt-get install -y $APT_QUIET python3-pip python3-venv python3-dev python3-distutils; then
+if run "$SUDO apt-get install -y $APT_QUIET python3-pip python3-venv python3-dev python3-distutils"; then
     success "Python3 extras ready"
     mark_installed "python3-venv"
 else
-    warn "Python3 extras install FAILED — continuing with remaining steps"
-    mark_failed "python3-venv"
+    warn "Python3 extras install failed — attempting fallbacks for distutils"
+
+    # Try versioned distutils package (e.g. python3.12-distutils)
+    if command -v python3 &>/dev/null; then
+        pyver=$(python3 -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))' 2>/dev/null || true)
+        if [[ -n "$pyver" ]]; then
+            alt_pkg="python${pyver}-distutils"
+            info "Trying alternative package: ${alt_pkg}"
+            if run "$SUDO apt-get install -y $APT_QUIET python3-pip python3-venv python3-dev ${alt_pkg}"; then
+                success "Python3 extras ready (installed ${alt_pkg})"
+                mark_installed "python3-venv"
+                alt_retry=1
+            fi
+        fi
+    fi
+
+    # If still failing, try enabling 'universe' and retry distutils
+    if [[ "${alt_retry:-0}" -ne 1 ]]; then
+        warn "Attempting to enable 'universe' repository and retry distutils install"
+        # Ensure add-apt-repository is available
+        run "$SUDO apt-get install -y $APT_QUIET software-properties-common || true"
+        if run "$SUDO add-apt-repository -y universe"; then
+            run "$SUDO apt-get update $APT_QUIET"
+            if run "$SUDO apt-get install -y $APT_QUIET python3-distutils"; then
+                success "Python3 distutils installed from universe"
+                # Ensure other extras are present
+                run "$SUDO apt-get install -y $APT_QUIET python3-pip python3-venv python3-dev || true"
+                mark_installed "python3-venv"
+                alt_retry=1
+            fi
+        fi
+    fi
+
+    if [[ "${alt_retry:-0}" -ne 1 ]]; then
+        warn "Python3 extras install FAILED — continuing with remaining steps"
+        mark_failed "python3-venv"
+    fi
 fi
 
 # Node version manager (nvm) — installs to ~/.nvm

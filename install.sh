@@ -764,6 +764,13 @@ if [[ -f "$BASHRC_SRC" ]]; then
     if [[ -f "$HOME/.bashrc" ]]; then
         cp "$HOME/.bashrc" "$BACKUP_PATH" 2>/dev/null || true
         success "Original ~/.bashrc backed up  →  ${BACKUP_PATH}"
+    elif [[ -n "${PREINSTALL_BACKUP:-}" && -f "${PREINSTALL_BACKUP}" ]]; then
+        # We moved the original ~/.bashrc out of the way at script start;
+        # promote that temporary backup to the final backup path so the
+        # user has a single, clearly named backup file.
+        mv "${PREINSTALL_BACKUP}" "$BACKUP_PATH" 2>/dev/null || true
+        success "Original ~/.bashrc backed up  →  ${BACKUP_PATH}"
+        PREINSTALL_BACKUP=""
     else
         warn "No existing ~/.bashrc found — nothing to back up"
     fi

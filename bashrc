@@ -22,6 +22,14 @@ shopt -s globstar
 shopt -s autocd          # type a dir name to cd into it
 shopt -s cdspell         # auto-correct minor typos in cd
 
+# Enable case-insensitive tab completion and optional case-insensitive globbing
+# Makes filename completion match regardless of case (e.g., tab-complete 'f' to 'Foo/')
+if command -v bind &>/dev/null; then
+    bind 'set completion-ignore-case on'
+fi
+# Optional: make filename globbing case-insensitive (affects patterns like *.txt)
+shopt -s nocaseglob 2>/dev/null || true
+
 # Save history after every command (multi-terminal safe)
 PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
 

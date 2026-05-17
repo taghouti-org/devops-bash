@@ -928,11 +928,17 @@ fi
 uniq_inplace() {
     local -n arr=$1
     local tmp=()
-    declare -A seen=()
+    local v existing found
     for v in "${arr[@]:-}"; do
-        if [[ -z "${seen[$v]:-}" ]]; then
+        found=0
+        for existing in "${tmp[@]:-}"; do
+            if [[ "${existing}" == "${v}" ]]; then
+                found=1
+                break
+            fi
+        done
+        if [[ "$found" -eq 0 ]]; then
             tmp+=("$v")
-            seen[$v]=1
         fi
     done
     arr=("${tmp[@]}")

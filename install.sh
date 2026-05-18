@@ -673,35 +673,54 @@ fi
 section "Java / OpenJDK"
 
 # Offer to install multiple OpenJDK versions commonly used across projects.
-read -rp "$(echo -e "${PINK}  Install OpenJDK 8, 11, 17 and 21? [y/N]:${R} ")" do_jdk
-if [[ "${do_jdk,,}" == "y" ]]; then
-    JDK_VERSIONS=(8 11 17 21)
-    for ver in "${JDK_VERSIONS[@]}"; do
-        pkg="openjdk-${ver}-jdk"
-        label="openjdk-${ver}"
-        # Detect via dpkg; if present mark as skipped
-        if dpkg -s "$pkg" &>/dev/null; then
-            echo -e "${GREY}  ↷  ${BOLD}${label}${R}${GREY} already installed — skipping${R}"
-            mark_skipped "$label"
-            continue
-        fi
+JDK_VERSIONS=(8 11 17 21)
 
-        info "Installing ${pkg}..."
-        if run "$SUDO apt-get install -y $APT_QUIET ${pkg}"; then
-            success "${label} installed"
-            mark_installed "$label"
-        else
-            warn "${label} install failed — skipping"
-            mark_failed "$label"
-        fi
+# If all requested JDK packages are already present, skip prompting entirely.
+all_present=1
+for ver in "${JDK_VERSIONS[@]}"; do
+    pkg="openjdk-${ver}-jdk"
+    if ! dpkg -s "$pkg" &>/dev/null; then
+        all_present=0
+        break
+    fi
+done
+
+if [[ $all_present -eq 1 ]]; then
+    echo -e "${GREY}  ↷  All OpenJDK versions (${JDK_VERSIONS[*]}) already installed — skipping${R}"
+    for ver in "${JDK_VERSIONS[@]}"; do
+        mark_skipped "openjdk-${ver}"
     done
+else
+    read -rp "$(echo -e "${PINK}  Install OpenJDK 8, 11, 17 and 21? [y/N]:${R} ")" do_jdk
+    if [[ "${do_jdk,,}" == "y" ]]; then
+        for ver in "${JDK_VERSIONS[@]}"; do
+            pkg="openjdk-${ver}-jdk"
+            label="openjdk-${ver}"
+            # Detect via dpkg; if present mark as skipped
+            if dpkg -s "$pkg" &>/dev/null; then
+                echo -e "${GREY}  ↷  ${BOLD}${label}${R}${GREY} already installed — skipping${R}"
+                mark_skipped "$label"
+                continue
+            fi
+
+            info "Installing ${pkg}..."
+            if run "$SUDO apt-get install -y $APT_QUIET ${pkg}"; then
+                success "${label} installed"
+                mark_installed "$label"
+            else
+                warn "${label} install failed — skipping"
+                mark_failed "$label"
+            fi
+        done
+    fi
 fi
 
 
 # ── 4. DOCKER ────────────────────────────────────────────────────
 section "Docker"
 
-if check_tool "docker"; then :
+if check_tool "docker"; then
+    :
 else
     info "Adding Docker GPG key and repo..."
     $SUDO install -m 0755 -d /etc/apt/keyrings

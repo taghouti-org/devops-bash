@@ -41,6 +41,8 @@ INSTALLED=()
 SKIPPED=()
 FAILED=()
 
+# Track what was installed vs skipped
+# (mark_* simply record into arrays)
 mark_installed() { INSTALLED+=("$1"); }
 mark_skipped()   { SKIPPED+=("$1"); }
 mark_failed()    { FAILED+=("$1"); }
@@ -255,6 +257,7 @@ echo -e "${GREY}  Dev       → git extras, jq, yq, httpie, make, lazygit, gh, d
 echo -e "${GREY}  DevOps    → docker, podman, lazydocker, kubectl, helm, k9s, kubectx/kubens, krew, kind, terraform, ansible${R}"
 echo -e "${GREY}  GUI/Extras→ VSCode, Google Chrome/Chromium, Postman, VLC, keepassxc, wps-office (optional)${R}"
 echo -e "${GREY}  Cloud     → aws-cli, gcloud (optional)${R}"
+echo -e "${GREY}  Docs      → this script records managed tools to ${MANAGED_TOOLS_FILE} (update TOOLS.md manually)${R}"
 echo ""
 read -rp "$(echo -e "${PINK}  Continue? [Y/n]:${R} ")" confirm
 [[ "${confirm,,}" =~ ^(n|no)$ ]] && echo "Aborted." && exit 0
@@ -663,6 +666,35 @@ else
             mark_failed "termius"
         fi
     fi
+fi
+
+
+# ── Java / OpenJDK ─────────────────────────────────────────────────
+section "Java / OpenJDK"
+
+# Offer to install multiple OpenJDK versions commonly used across projects.
+read -rp "$(echo -e "${PINK}  Install OpenJDK 8, 11, 17 and 21? [y/N]:${R} ")" do_jdk
+if [[ "${do_jdk,,}" == "y" ]]; then
+    JDK_VERSIONS=(8 11 17 21)
+    for ver in "${JDK_VERSIONS[@]}"; do
+        pkg="openjdk-${ver}-jdk"
+        label="openjdk-${ver}"
+        # Detect via dpkg; if present mark as skipped
+        if dpkg -s "$pkg" &>/dev/null; then
+            echo -e "${GREY}  ↷  ${BOLD}${label}${R}${GREY} already installed — skipping${R}"
+            mark_skipped "$label"
+            continue
+        fi
+
+        info "Installing ${pkg}..."
+        if run "$SUDO apt-get install -y $APT_QUIET ${pkg}"; then
+            success "${label} installed"
+            mark_installed "$label"
+        else
+            warn "${label} install failed — skipping"
+            mark_failed "$label"
+        fi
+    done
 fi
 
 

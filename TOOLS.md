@@ -70,6 +70,14 @@ Format: **Tool** — short description
 - **entr** — run arbitrary commands when files change (useful for rebuilds/tests). Example: `ls **/*.py | entr -r pytest`.
 - **thefuck** — suggests fixes for mistyped shell commands. After install, run `thefuck --alias` to add alias.
 - **tig** — ncurses-based git repository browser. Usage: `tig` or `tig status`.
+# **OpenJDK** — multiple Java runtimes may be installed by the installer.
+# The installer can offer to install OpenJDK 8, 11, 17 and 21 (packages: `openjdk-8-jdk`, `openjdk-11-jdk`, `openjdk-17-jdk`, `openjdk-21-jdk`).
+# Quick test: `java -version` and `javac -version` — use `update-alternatives` to switch defaults (see below).
+# To switch the system default Java/Javac after installing multiple JDKs:
+# ```bash
+# sudo update-alternatives --config java
+# sudo update-alternatives --config javac
+# ```
 # thefuck: installer behavior
 The `bashrc` and `install.sh` were updated to attempt to enable the `thefuck` alias automatically when the binary is present. A guarded `eval "$(thefuck --alias)"` entry is added to the provided `bashrc` so the alias is active in interactive shells.
 
@@ -90,10 +98,6 @@ Krew plugin recommendations
 - `view-secret` — safely view secrets in different formats.
 - `who-can` — RBAC utility to check who can perform actions.
 
-If you'd like, I can expand any of these entries with example commands and common flags.
-
 Tips
 - Many of the modern tools (`eza`, `bat`, `fd`, `ripgrep`) are used as drop-in replacements via aliases in `bashrc` — you can revert to system defaults by removing or commenting aliases in `~/.bashrc.local`.
 - If a tool fails to install during `install.sh`, re-run the script after fixing network or repo issues; the script will skip already-installed tools.
-
-Want detailed usage snippets for any specific tool? Tell me which ones and I will expand their sections with commands and common flags.

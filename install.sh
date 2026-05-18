@@ -45,6 +45,22 @@ mark_installed() { INSTALLED+=("$1"); }
 mark_skipped()   { SKIPPED+=("$1"); }
 mark_failed()    { FAILED+=("$1"); }
 
+# uniq_array SRC_ARRAY_NAME DEST_ARRAY_NAME
+# Produce a deduplicated array named by DEST_ARRAY_NAME preserving order.
+uniq_array() {
+    local srcname="$1" destname="$2"
+    eval "local -a _src=(\"\${${srcname}[@]}\")"
+    eval "${destname}=()"
+    declare -A _seen=()
+    local item
+    for item in "${_src[@]}"; do
+        if [[ -z "${_seen[$item]:-}" ]]; then
+            _seen[$item]=1
+            eval "${destname}+=(\"$item\")"
+        fi
+    done
+}
+
 # Run a command, capture failure without exiting
 try() {
     local label="$1"; shift
@@ -1581,25 +1597,28 @@ echo -e "${BOLD}  INSTALLATION SUMMARY${R}"
 echo -e "${NEON}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
 echo ""
 
-if [[ ${#INSTALLED[@]} -gt 0 ]]; then
-    echo -e "${BGREEN}  Installed (${#INSTALLED[@]}):${R}"
-    for item in "${INSTALLED[@]}"; do
+uniq_array INSTALLED INSTALLED_UNIQ
+if [[ ${#INSTALLED_UNIQ[@]} -gt 0 ]]; then
+    echo -e "${BGREEN}  Installed (${#INSTALLED_UNIQ[@]}):${R}"
+    for item in "${INSTALLED_UNIQ[@]}"; do
         echo -e "${GREEN}    ✔  ${item}${R}"
     done
 fi
 
-if [[ ${#SKIPPED[@]} -gt 0 ]]; then
+uniq_array SKIPPED SKIPPED_UNIQ
+if [[ ${#SKIPPED_UNIQ[@]} -gt 0 ]]; then
     echo ""
-    echo -e "${GREY}  Already present (${#SKIPPED[@]}):${R}"
-    for item in "${SKIPPED[@]}"; do
+    echo -e "${GREY}  Already present (${#SKIPPED_UNIQ[@]}):${R}"
+    for item in "${SKIPPED_UNIQ[@]}"; do
         echo -e "${GREY}    ↷  ${item}${R}"
     done
 fi
 
-if [[ ${#FAILED[@]} -gt 0 ]]; then
+uniq_array FAILED FAILED_UNIQ
+if [[ ${#FAILED_UNIQ[@]} -gt 0 ]]; then
     echo ""
-    echo -e "${RED}  Failed (${#FAILED[@]}):${R}"
-    for item in "${FAILED[@]}"; do
+    echo -e "${RED}  Failed (${#FAILED_UNIQ[@]}):${R}"
+    for item in "${FAILED_UNIQ[@]}"; do
         echo -e "${RED}    ✘  ${item}${R}"
     done
     echo -e "${YELLOW}  → These likely need internet access to GitHub/external repos${R}"

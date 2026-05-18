@@ -53,6 +53,8 @@ Format: **Tool** — short description
 - **kind** — Run local Kubernetes clusters in Docker for development/testing. Usage: `kind create cluster`.
 - **krew** — `kubectl` plugin manager. After installing `krew`, install plugins like `kubectl krew install ctx`.
 
+- **OpenShift CLI (oc)** — CLI for OpenShift clusters. The installer can optionally download the official OpenShift client tarball and install the `oc` binary to `/usr/local/bin`. Quick test: `oc version --client`.
+
 - **Postman** — GUI API client. The installer can optionally install Postman via `snap` or tarball. Launch via application menu or `postman` binary if installed.
 - **VLC** — Media player available via apt or snap. Launch via `vlc`.
 - **Termius** — GUI + CLI SSH client with host management and snippets. Installer: optional via `snap install termius-app --classic` when `snap` is available. Manual downloads available from https://www.termius.com/download

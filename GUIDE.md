@@ -195,6 +195,11 @@ This guide gives a short, practical usage note and quick test for each tool inst
   - When to use: fast context and namespace switching.
   - Quick test: `kubectx --help` / `kubens --help`.
 
+- OpenShift CLI (`oc`)
+  - When to use: interact with OpenShift clusters (create projects, apply manifests, manage resources).
+  - Installer: optional — downloads the OpenShift client tarball from Mirror.OpenShift and installs `oc` to `/usr/local/bin` when accepted by the installer.
+  - Quick test: `oc version --client` and `oc login --server=<api-server>`.
+
 - krew
   - When to use: manage `kubectl` plugins (install extra tooling).
   - Quick test: `kubectl krew` or `~/.krew/bin/kubectl-krew version` and `kubectl krew list`.

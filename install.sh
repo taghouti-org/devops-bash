@@ -625,7 +625,10 @@ else
 fi
 
 # Termius (optional SSH client)
-if check_tool "termius" "termius"; then :
+# Only prompt if Termius is not already installed — check both binary and snap package
+if command -v termius &>/dev/null || (command -v snap &>/dev/null && snap list termius-app &>/dev/null); then
+    echo -e "${GREY}  ↷  Termius — already installed${R}"
+    mark_skipped "termius"
 else
     read -rp "$(echo -e "${PINK}  Install Termius SSH client? [y/N]:${R} ")" do_termius
     if [[ "${do_termius,,}" == "y" ]]; then
@@ -897,6 +900,39 @@ https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
     else
         error "terraform install failed"
         mark_failed "terraform"
+    fi
+fi
+
+# OpenShift CLI (oc)
+if check_tool "oc" "oc"; then :
+else
+    read -rp "$(echo -e "${PINK}  Install OpenShift CLI (oc)? [y/N]:${R} ")" do_oc
+    if [[ "${do_oc,,}" == "y" ]]; then
+        info "Installing OpenShift CLI (oc)..."
+        OC_URL="https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz"
+        TMP_OC="/tmp/oc.tar.gz"
+        EX_DIR=$(mktemp -d)
+        if run "curl -fsSL \"$OC_URL\" -o \"$TMP_OC\"" && run "tar -xzf \"$TMP_OC\" -C \"$EX_DIR\""; then
+            # find oc binary and move to /usr/local/bin
+            ocpath=$(find "$EX_DIR" -type f -name oc | head -n1 || true)
+            if [[ -n "${ocpath:-}" ]]; then
+                if run "$SUDO mv \"$ocpath\" /usr/local/bin/oc"; then
+                    run "$SUDO chmod +x /usr/local/bin/oc"
+                    success "oc installed to /usr/local/bin/oc"
+                    mark_installed "oc"
+                else
+                    warn "Failed to move oc binary to /usr/local/bin"
+                    mark_failed "oc"
+                fi
+            else
+                warn "Failed to locate oc binary after extraction"
+                mark_failed "oc"
+            fi
+            run "rm -rf \"$EX_DIR\" \"$TMP_OC\""
+        else
+            warn "Failed to download or extract OpenShift client. Install manually from https://mirror.openshift.com"
+            mark_failed "oc"
+        fi
     fi
 fi
 
@@ -1337,46 +1373,6 @@ else
 fi
 
 echo ""
-echo -e "${NEON}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
-echo -e "${BOLD}  INSTALLATION SUMMARY${R}"
-echo -e "${NEON}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
-echo ""
-
-if [[ ${#INSTALLED[@]} -gt 0 ]]; then
-    echo -e "${BGREEN}  Installed (${#INSTALLED[@]}):${R}"
-    for item in "${INSTALLED[@]}"; do
-        echo -e "${GREEN}    ✔  ${item}${R}"
-    done
-fi
-
-if [[ ${#SKIPPED[@]} -gt 0 ]]; then
-    echo ""
-    echo -e "${GREY}  Already present (${#SKIPPED[@]}):${R}"
-    for item in "${SKIPPED[@]}"; do
-        echo -e "${GREY}    ↷  ${item}${R}"
-    done
-fi
-
-if [[ ${#FAILED[@]} -gt 0 ]]; then
-    echo ""
-    echo -e "${RED}  Failed (${#FAILED[@]}):${R}"
-    for item in "${FAILED[@]}"; do
-        echo -e "${RED}    ✘  ${item}${R}"
-    done
-    echo -e "${YELLOW}  → These likely need internet access to GitHub/external repos${R}"
-fi
-
-echo ""
-echo -e "${BCYAN}  Next steps:${R}"
-echo -e "${CYAN}    1. source ~/.bashrc${R}           ${GREY}← activate everything now${R}"
-echo -e "${CYAN}    2. Log out & back in${R}           ${GREY}← for docker group to take effect${R}"
-if [[ ${#FAILED[@]} -gt 0 ]]; then
-echo -e "${CYAN}    3. Re-run for failed tools${R}     ${GREY}← once network access is open${R}"
-fi
-echo ""
-echo -e "${NEON}  Happy hacking! ⚡${R}"
-echo ""
-
 # ── OPTIONAL EXTRAS (GUI & misc) ─────────────────────────────────
 section "Optional Extras (GUI & misc)"
 
@@ -1553,6 +1549,46 @@ else
         fi
     fi
 fi
+
+echo -e "${NEON}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
+echo -e "${BOLD}  INSTALLATION SUMMARY${R}"
+echo -e "${NEON}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
+echo ""
+
+if [[ ${#INSTALLED[@]} -gt 0 ]]; then
+    echo -e "${BGREEN}  Installed (${#INSTALLED[@]}):${R}"
+    for item in "${INSTALLED[@]}"; do
+        echo -e "${GREEN}    ✔  ${item}${R}"
+    done
+fi
+
+if [[ ${#SKIPPED[@]} -gt 0 ]]; then
+    echo ""
+    echo -e "${GREY}  Already present (${#SKIPPED[@]}):${R}"
+    for item in "${SKIPPED[@]}"; do
+        echo -e "${GREY}    ↷  ${item}${R}"
+    done
+fi
+
+if [[ ${#FAILED[@]} -gt 0 ]]; then
+    echo ""
+    echo -e "${RED}  Failed (${#FAILED[@]}):${R}"
+    for item in "${FAILED[@]}"; do
+        echo -e "${RED}    ✘  ${item}${R}"
+    done
+    echo -e "${YELLOW}  → These likely need internet access to GitHub/external repos${R}"
+fi
+
+echo ""
+echo -e "${BCYAN}  Next steps:${R}"
+echo -e "${CYAN}    1. source ~/.bashrc${R}           ${GREY}← activate everything now${R}"
+echo -e "${CYAN}    2. Log out & back in${R}           ${GREY}← for docker group to take effect${R}"
+if [[ ${#FAILED[@]} -gt 0 ]]; then
+echo -e "${CYAN}    3. Re-run for failed tools${R}     ${GREY}← once network access is open${R}"
+fi
+echo ""
+echo -e "${NEON}  Happy hacking! ⚡${R}"
+echo ""
 
 # ── Install .bashrc (deferred) ───────────────────────────────────
 section "Applying .bashrc"

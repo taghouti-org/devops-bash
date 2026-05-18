@@ -70,16 +70,15 @@ Format: **Tool** — short description
 - **entr** — run arbitrary commands when files change (useful for rebuilds/tests). Example: `ls **/*.py | entr -r pytest`.
 - **thefuck** — suggests fixes for mistyped shell commands. After install, run `thefuck --alias` to add alias.
 - **tig** — ncurses-based git repository browser. Usage: `tig` or `tig status`.
-# **OpenJDK** — multiple Java runtimes may be installed by the installer.
-# The installer can offer to install OpenJDK 8, 11, 17 and 21 (packages: `openjdk-8-jdk`, `openjdk-11-jdk`, `openjdk-17-jdk`, `openjdk-21-jdk`).
-# Quick test: `java -version` and `javac -version` — use `update-alternatives` to switch defaults (see below).
-# To switch the system default Java/Javac after installing multiple JDKs:
+# **OpenJDK** — multiple Java runtimes may be installed by the installer (OpenJDK 8, 11, 17, 21).
+# Quick test: `java -version` and `javac -version`.
+# To switch the system default `java`/`javac` when multiple JDKs are present:
 # ```bash
 # sudo update-alternatives --config java
 # sudo update-alternatives --config javac
 # ```
-# thefuck: installer behavior
-The `bashrc` and `install.sh` were updated to attempt to enable the `thefuck` alias automatically when the binary is present. A guarded `eval "$(thefuck --alias)"` entry is added to the provided `bashrc` so the alias is active in interactive shells.
+
+The `bashrc` and `install.sh` may attempt to enable `thefuck`'s shell alias when the tool is present; add `eval "$(thefuck --alias)"` to your interactive shell if you prefer the alias.
 
 - **wps-office** — optional Microsoft-compatible office suite (GUI).
   - Installer: `install.sh` prompts `Install WPS Office (optional)? [y/N]`. If accepted and LibreOffice/OpenOffice is detected, the installer asks whether to remove those packages before installing WPS to avoid conflicts. If `wps-office` isn't available in `apt` the installer will warn and provide the official download URL.
@@ -101,3 +100,18 @@ Krew plugin recommendations
 Tips
 - Many of the modern tools (`eza`, `bat`, `fd`, `ripgrep`) are used as drop-in replacements via aliases in `bashrc` — you can revert to system defaults by removing or commenting aliases in `~/.bashrc.local`.
 - If a tool fails to install during `install.sh`, re-run the script after fixing network or repo issues; the script will skip already-installed tools.
+
+## Complete installer-managed tools
+
+The installer covers a broad set of CLI and GUI tools. This list groups the main items the script may install or manage (some are optional prompts):
+
+- Terminal & utilities: `vim`, `nvim`, `fzf`, `eza`, `bat`/`batcat`, `btop`, `zoxide`, `tmux`, `ripgrep` (`rg`), `fd`/`fd-find`, `delta` (git-delta), `ncdu`, `tldr`, `autojump`, `entr`, `thefuck`, `tig`, `neofetch`.
+- Dev tools: `jq`, `yq` (mikefarah v4 preferred), `httpie`, `make`, Python extras (`python3-pip`, `python3-venv`, `python3-dev`), `nvm`, `pyenv`, `rbenv`, `gh`, `direnv`, `asdf`, `lazygit`, `git-crypt`, `neovim`, `micro`.
+- Containers & k8s: `docker`, `lazydocker`, `podman`, `kubectl`, `helm`, `k9s`, `kind`, `kubectx`/`kubens`, `krew` (+ common plugins), `oc` (OpenShift `oc` client).
+- IaC & infra: `terraform`, `ansible`, `taskwarrior`.
+- Cloud CLIs: `aws-cli` (v2), optional `gcloud`.
+- Prompt / fonts: `starship`, JetBrainsMono / Nerd fonts (installer can add them).
+- GUI / Desktop apps (optional): `vscode` (code), `google-chrome`/`chromium`, `postman`, `vlc`, `keepassxc`, `wps-office` (optional), `termius`, `anydesk`.
+- Package managers / helpers: `homebrew` (Linuxbrew), `pipx`, `krew` plugins (`ctx`, `ns`, `konfig`, `view-secret`, `who-can`).
+
+If you notice a tool installed by `install.sh` that's not represented above, tell me which one and I'll add a short usage note to this file or expand the `GUIDE.md` entry.

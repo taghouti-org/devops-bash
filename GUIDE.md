@@ -69,26 +69,21 @@ This guide gives a short, practical usage note and quick test for each tool inst
   - When to use: re-run commands when files change (useful for tests/build loops).
   - Quick test: `echo test | entr --version` or `ls *.py | entr -p echo changed`.
   - Try: `ls *.py | entr -r pytest`.
+ - thefuck
+   - When to use: get suggestions for fixing mistyped commands.
+   - Note: the Ubuntu `thefuck` apt package can be outdated or broken on newer Python versions (ModuleNotFoundError: No module named 'imp').
+   - Recommended install: use `pipx` for isolated installs:
+     ```bash
+     # install pipx (if missing)
+     sudo apt-get install -y pipx python3-venv
+     pipx ensurepath
+     pipx install thefuck
+     ```
+     Fallback: `python3 -m pip install --user thefuck` (ensure `~/.local/bin` is on `PATH`).
+   - Quick test: `thefuck --version` and add the alias with `eval "$(thefuck --alias)"`.
+   - Try: run an invalid command like `gti status` then run `fuck` to apply the suggested fix.
 
-- thefuck
-  - When to use: get suggestions for fixing mistyped commands.
-  - Quick test: `thefuck --version` and follow post-install alias instructions (`eval $(thefuck --alias)`).
-  - Try: run an invalid command like `gti status` then run `fuck`.
-- thefuck
-  - When to use: get suggestions for fixing mistyped commands.
-  - Note: the Ubuntu `thefuck` apt package can be outdated or broken on newer Python versions (ModuleNotFoundError: No module named 'imp').
-  - Recommended install: use `pipx` for isolated installs:
-    ```bash
-    # install pipx (if missing)
-    sudo apt-get install -y pipx python3-venv
-    pipx ensurepath
-    pipx install thefuck
-    ```
-    Fallback: `python3 -m pip install --user thefuck` (ensure `~/.local/bin` is on `PATH`).
-  - Quick test: `thefuck --version` and add the alias with `eval "$(thefuck --alias)"`.
-  - Try: run an invalid command like `gti status` then run `fuck` to apply the suggested fix.
-  
-  Note: the installer now attempts to enable `thefuck` for the current shell automatically when it installs or detects the binary, and also adds a guarded `eval "$(thefuck --alias)"` to the repo `bashrc` so the alias persists for interactive shells.
+   Note: the installer attempts to enable `thefuck` for the current shell when it installs or detects the binary, and the provided `bashrc` includes a guarded `eval "$(thefuck --alias)"` entry so the alias persists across interactive shells.
 
 - tig
   - When to use: terminal-based Git repository browser.
@@ -163,6 +158,16 @@ This guide gives a short, practical usage note and quick test for each tool inst
 - tldr
   - (Covered above in Terminal utilities.)
 
+- OpenJDK / Java
+  - When to use: run or build Java applications; many projects require specific JDK versions.
+  - Installer: optional — `install.sh` can offer OpenJDK 8, 11, 17 and 21 (packages: `openjdk-8-jdk`, `openjdk-11-jdk`, `openjdk-17-jdk`, `openjdk-21-jdk`).
+  - Quick test: `java -version` and `javac -version`.
+  - To switch the system default `java`/`javac` when multiple JDKs are installed:
+    ```bash
+    sudo update-alternatives --config java
+    sudo update-alternatives --config javac
+    ```
+
 ---
 
 ## DevOps / Cloud
@@ -231,16 +236,17 @@ This guide gives a short, practical usage note and quick test for each tool inst
 - Google Chrome / Chromium
   - When to use: browser for web apps and testing.
   - Quick test: `google-chrome --version` or `chromium-browser --version`.
+ - Postman
+   - When to use: GUI API client for exploring REST/GraphQL endpoints.
+   - Quick test: launch via desktop menu or run the `postman` binary if installed (CLI test isn't reliable since it's a GUI app).
 
-  - When to use: GUI API client for exploring REST/GraphQL endpoints.
-  - Quick test: launch via desktop menu; CLI test isn't reliable because GUI may block.
-
- AnyDesk
+ - AnyDesk
    - When to use: remote desktop access to support or access graphical sessions remotely.
    - Installer: optional — the installer will add AnyDesk's APT repo and install the `anydesk` package when accepted.
    - Quick test: `anydesk --version` and launch the application from your desktop environment.
-- VLC
-  - When to use: media playback.
+
+ - VLC
+   - When to use: media playback.
   - Quick test: `vlc --version` and open a media file.
 
 - Termius

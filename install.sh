@@ -250,14 +250,14 @@ cat << 'EOF'
   ╚══════════════════════════════════════════════════════════╝
 EOF
 echo -e "${R}"
-
+# INSTALLER OVERVIEW
 echo -e "${GREY}  This script will install:${R}"
 echo -e "${GREY}  Terminal  → vim, nvim, fzf, eza, bat, btop, zoxide, tmux, ripgrep, fd, delta, ncdu, tldr, autojump, entr, thefuck, tig${R}"
 echo -e "${GREY}  Dev       → git extras, jq, yq, httpie, make, lazygit, gh, direnv, asdf, pyenv, rbenv${R}"
 echo -e "${GREY}  DevOps    → docker, podman, lazydocker, kubectl, helm, k9s, kubectx/kubens, krew, kind, terraform, ansible${R}"
 echo -e "${GREY}  GUI/Extras→ VSCode, Google Chrome/Chromium, Postman, VLC, keepassxc, wps-office (optional)${R}"
 echo -e "${GREY}  Cloud     → aws-cli, gcloud (optional)${R}"
-echo -e "${GREY}  Docs      → this script records managed tools to ${MANAGED_TOOLS_FILE} (update TOOLS.md manually)${R}"
+echo -e "${GREY}  Docs      → update TOOLS.md and GUIDE.md to reflect included apps (maintain docs manually)${R}"
 echo ""
 read -rp "$(echo -e "${PINK}  Continue? [Y/n]:${R} ")" confirm
 [[ "${confirm,,}" =~ ^(n|no)$ ]] && echo "Aborted." && exit 0

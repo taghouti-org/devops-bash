@@ -36,6 +36,7 @@ The installer prompts for optional steps like AWS CLI and Starship.
 - DevOps / Cloud: `docker`, `lazydocker`, `kubectl`, `helm`, `k9s`, `kubectx/kubens`, `krew`, `kind`, `podman`, `terraform`, `ansible`
 - Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc, Termius)
 - Optional: `aws-cli`, `starship` prompt, `neofetch` (welcome banner), GUI apps (VSCode, Chrome/Chromium, Postman, VLC, keepassxc, Termius, AnyDesk)
+ - Java/OpenJDK: optional installs for OpenJDK 8, 11, 17 and 21 (use `update-alternatives` to set defaults)
 
 ## Usage Guide
 

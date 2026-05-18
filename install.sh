@@ -1531,6 +1531,32 @@ else
     fi
 fi
 
+# AnyDesk (remote desktop)
+if check_tool "anydesk" "anydesk"; then
+    echo -e "${GREY}  ↷  AnyDesk — already installed${R}"
+    mark_skipped "anydesk"
+else
+    read -rp "$(echo -e "${PINK}  Install AnyDesk (remote desktop)? [y/N]:${R} ")" do_anydesk
+    if [[ "${do_anydesk,,}" == "y" ]]; then
+        info "Installing AnyDesk..."
+        # Add AnyDesk repo and GPG key then install via apt
+        if run "curl -fsSL https://keys.anydesk.com/repos/DEB-GPG-KEY | $SUDO apt-key add -"; then
+            run "$SUDO sh -c 'echo \"deb http://deb.anydesk.com/ all main\" > /etc/apt/sources.list.d/anydesk.list'"
+            run "$SUDO apt-get update $APT_QUIET"
+            if run "$SUDO apt-get install -y $APT_QUIET anydesk"; then
+                success "AnyDesk installed"
+                mark_installed "anydesk"
+            else
+                warn "Failed to install AnyDesk via apt"
+                mark_failed "anydesk"
+            fi
+        else
+            warn "Failed to add AnyDesk GPG key — cannot install automatically"
+            mark_failed "anydesk"
+        fi
+    fi
+fi
+
 # VLC (media player)
 if check_tool "vlc" "vlc"; then
     echo -e "${GREY}  ↷  VLC — already installed${R}"

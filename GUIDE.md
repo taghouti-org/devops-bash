@@ -232,10 +232,13 @@ This guide gives a short, practical usage note and quick test for each tool inst
   - When to use: browser for web apps and testing.
   - Quick test: `google-chrome --version` or `chromium-browser --version`.
 
-- Postman
   - When to use: GUI API client for exploring REST/GraphQL endpoints.
   - Quick test: launch via desktop menu; CLI test isn't reliable because GUI may block.
 
+ AnyDesk
+   - When to use: remote desktop access to support or access graphical sessions remotely.
+   - Installer: optional — the installer will add AnyDesk's APT repo and install the `anydesk` package when accepted.
+   - Quick test: `anydesk --version` and launch the application from your desktop environment.
 - VLC
   - When to use: media playback.
   - Quick test: `vlc --version` and open a media file.
